@@ -1,0 +1,9 @@
+Executable = "wrapper" ; 
+Arguments  = "/bin/sh omnimatch.sh" ; 
+StdOutput  = "std.out" ; 
+StdError   = "std.err" ; 
+OutputSandbox = {"std.out" , "std.err" } ; 
+InputSandbox  = { "omnimatch.sh" , "omnimatch.conf" , "mdasEnv" , 
+  "omnimatch.exe" , "wrapper" } ; 
+JobType = "MPICH"  ; 
+NodeNumber = 2 ; 
