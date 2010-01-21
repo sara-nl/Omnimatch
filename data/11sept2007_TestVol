@@ -1,9 +1,0 @@
- Dims tomogram: 128 , 128 , 128  -  dim FFT 128 
-Plans for FFTW created 
-
- OMNIMATCH knocks the stuffing out of you ... Time : 11:17:15
-
-Create outputfile: 11sept2007_TestVol_Output.ccf ... 
-Create outputfile: 11sept2007_TestVol_Output.ang ... 
-Time : 11:17:16
-0.000000%..OMNIMATCH finished succesfully. Good luck.Time : 11:19:3
