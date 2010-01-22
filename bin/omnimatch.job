@@ -1,0 +1,18 @@
+# This is a job requesting 4 cores
+#
+# request 2 nodes, 2 cores per node and 
+#  each node equipped with the infiniband network:
+#PBS -lnodes=1:ppn=8
+# job requires at most 1 hour wallclock time
+#PBS -lwalltime=1:00:00
+
+# load the necessary module(s), for example:
+module load c
+module load openmpi
+
+# Add here the code needed for your job, example:
+cd $HOME/omnimatch/bin
+# start your program
+echo "Start of program at `date`"
+mpiexec ./omnimatch.exe
+echo "End of program at `date`"

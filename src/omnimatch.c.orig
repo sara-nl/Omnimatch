@@ -67,10 +67,6 @@ main (int argc, char *argv[])
   
 /* MPI Variablen Ende*/
 
-  MPI_Init (&argc, &argv);
-  MPI_Comm_size (MPI_COMM_WORLD, &mysize);
-  MPI_Comm_rank (MPI_COMM_WORLD, &myrank);
-
   if (argc < 15)
     {
       printf ("\n\n");
@@ -119,6 +115,9 @@ main (int argc, char *argv[])
       exit (1);
     }
 
+  MPI_Init (&argc, &argv);
+  MPI_Comm_size (MPI_COMM_WORLD, &mysize);
+  MPI_Comm_rank (MPI_COMM_WORLD, &myrank);
   /* Dimensionen auslesen */
   // Dimension of fft
   dim_fft = atoi (argv[15]);

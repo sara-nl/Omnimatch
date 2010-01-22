@@ -6,7 +6,7 @@ CFLAGS = -g  -I. -I../include/ -I../../../include
 
 LD = $(CC)
 LDFLAGS = -g  -L. -L../../../lib -L../lib/
-LIBS = -lrfftw -lfftw -lm -ltom -lmpich
+LIBS = -lrfftw -lfftw -lm -ltom -lmpi
 
 OBJECTS = ./omnimatch.o  
 
