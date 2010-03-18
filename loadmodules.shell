@@ -1,4 +1,3 @@
-#!/bin/bash
 # You should source this file, not execute it!
 
 module load openmpi/gnu
