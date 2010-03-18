@@ -9,4 +9,4 @@ fi
 # This environment variable is used by gperftools:
 #export CPUPROFILE=${OMPI_COMM_WORLD_RANK}.prof
 
-exec ./omnimatch.bin "$@"
+exec `dirname "$0"`/omnimatch.bin "$@"

@@ -1,0 +1,17 @@
+This distro has only been tested on Lisa, the Dutch National Compute
+Cluster. It is based on the `qmake` Makefile generator, part of the Qt GUI
+library from Trolltech.
+
+== Building ==
+1.	`cd` into the root of the distro tree.
+2.	Source the file 'loadmodules.shell' into your current shell. In
+	bash, you'd do this by running `source loadmodules.shell`
+3.	Run `qmake -o Makefile`; this should create a file called
+	./Makefile.
+4.	Run `make`. This should produce a binary 'bin/omnimatch.bin'.
+
+== Running ==
+1.	If you haven't already done so, source file 'loadmodules.shell' into
+	your current shell.
+2. Instead of running the binary itself directly, you should run a wrapper
+	script called 'bin/omnimatch'.
