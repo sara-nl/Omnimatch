@@ -1,0 +1,6 @@
+omnimatch.bin
+*.err
+*.out
+*.ccf
+*.ang
+*.job.[eo]*

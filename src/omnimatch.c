@@ -1,3 +1,22 @@
+/**************************************************************************
+ * Copyright (C) 2010 W. Baumeister, MPI BioChemistry, Martinsried, Germany
+ *
+ * This file is part of Omnimatch.
+ *
+ * Omnimatch is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Omnimatch is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Omnimatch.  If not, see <http://www.gnu.org/licenses/>.
+ **************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -179,6 +198,7 @@ main (int argc, char *argv[])
     {
       printf ("Memory allocation  failure in inputdata1.floatdata!!!");
       fflush (stdout);
+      MPI_Finalize();
       exit (1);
     }
   if (!
@@ -187,6 +207,7 @@ main (int argc, char *argv[])
     {
       printf ("Memory allocation  failure in outputdata.floatdata!!!");
       fflush (stdout);
+      MPI_Finalize();
       exit (1);
     }
   
@@ -196,6 +217,7 @@ main (int argc, char *argv[])
       printf ("Memory allocation  failure in Volume_tmpl_sort!!!");
       printf ("Nx = %i, Ny = %i, Nz = %i, bytes = %i \n",2 *(Vx_max / 2 + 1),Vy_max, Vz_max, sizeof (fftw_real));
       fflush (stdout);
+      MPI_Finalize();
       exit (1);
     }
   Ergebnis = (float *) calloc (Vz_max * Vy_max * Vx_max, sizeof (float));

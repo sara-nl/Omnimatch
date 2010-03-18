@@ -1,18 +1,19 @@
-# This is a job requesting 4 cores
+# This is a job requesting 2 cores
 #
 # request 2 nodes, 2 cores per node and 
 #  each node equipped with the infiniband network:
-#PBS -lnodes=1:ppn=1
+#PBS -lnodes=1:ppn=2
 # job requires at most 1 hour wallclock time
-#PBS -lwalltime=0:09:00
+#PBS -lwalltime=1:00:00
 
 cd $HOME/omnimatch/bin
 
 # load the necessary module(s), for example:
 #module load paffinity
-module load fftw2/openmpi/gnu
-module load openmpi/gnu
-module load gperftools
+module load fftw2/openmpi/intel
+module load openmpi/intel
+module load c
+#module load gperftools
 
 # determine the number of processors:
 #nprocs=`wc -l < $PBS_NODEFILE`
@@ -21,5 +22,5 @@ module load gperftools
 
 # start your program
 cat $PBS_NODESFILE
-time mpiexec ./omnimatch ../data/testvol.em ../data/templ.em testvol1 0 180 20 0 180 20 0 180 20 ../data/psf.em ../data/mask_15.em 128 >testvol1.out 2>testvol1.err
+time mpiexec ./omnimatch ../data/testvol.em ../data/templ.em testvol2 0 180 20 0 180 20 0 180 20 ../data/psf.em ../data/mask_15.em 128 >testvol2.out 2>testvol2.err
 #mpiexec ./omnimatch.exe
