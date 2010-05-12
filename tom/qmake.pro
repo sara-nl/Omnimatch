@@ -13,7 +13,6 @@ SOURCES += cross.c \
 	fourfilter.c \
 	pastes.c \
 	real_utils.c \
-	rotate3d.c \
 	shift.c \
 	sort4fftw.c \
 	tom_rotate3d.c
