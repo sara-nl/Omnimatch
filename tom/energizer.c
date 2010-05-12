@@ -92,7 +92,7 @@ THUS Rot_tmpl is overwritten!
 FF 07/02
 */
 float energizer
-   (int Rx_min,
+   (int Rx_min, // unused?
     int Rx_max,
     float n,
     float *Rot_tmpl,  // reference to be manipulated
@@ -101,6 +101,7 @@ float energizer
     rfftwnd_plan r3,
     rfftwnd_plan ri3)
 {
+  Rx_min+=0; // Suppress warning for unused parameter
   float rms_wedge;
   fftw_real  *wedge, *Rot_tmpl_ft, *Rreal;
   fftw_complex *W3, *R3;
@@ -210,7 +211,7 @@ float energizer
   return rms_wedge;
 }
 /* ------------------  ----------------------------------*/
-float prepref(int Rx_min,
+float prepref(int Rx_min, // unused?
 	      int Rx_max,
 	      float eps,
 	      float *Rot_tmpl,  // reference to be manipulated
@@ -219,6 +220,7 @@ float prepref(int Rx_min,
 	      rfftwnd_plan r3,
 	      rfftwnd_plan ri3)
 { 
+  Rx_min += 0;
   float rms_wedge, nvox;
   fftw_real  *wedge, *Rot_tmpl_ft, *Rreal;
   fftw_complex *W3, *R3;
@@ -323,11 +325,12 @@ float prepref(int Rx_min,
 /* energizer without pointspread 
  FF 05/22/02          */
 float energizer_norot
-   (int Rx_min,
+   (int Rx_min, //unused?
     int Rx_max,
     int n,
     float *Tmpl)
 {  
+  Rx_min += 0;
   float rms_wedge;
   int i, j, k;
   int lauf;
@@ -363,7 +366,7 @@ float energizer_norot
 	   routine calculates the local variance using FFT
 	   see also Roseman, A.M., Ultramicroscopy 94, p. 225-236
 */
-float energizer_fft(int Rx_min,
+/*float (int Rx_min,
 		    int Rx_max,
 		    int n,
 		    float *Rot_tmpl,  // reference to be manipulated
@@ -379,6 +382,6 @@ float energizer_fft(int Rx_min,
   int ijk;
   int lauf;
   float Rtmp, Rtmpim, Wtmp, Wtmpim, scale, SUM, SQSUM;
-}
+}*/
 
 

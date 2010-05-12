@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <time.h>
 #include <tom.h>
@@ -33,7 +34,7 @@ MPI_Request request, request1, request2, request3, request4;
 
 int myrank, mysize, tag = 99;
 
-main (int argc, char *argv[])
+int main (int argc, char *argv[])
 {
   struct em_file inputdata1;
   struct em_file inputdata2;
@@ -41,12 +42,12 @@ main (int argc, char *argv[])
   struct em_file inputdata4;
   struct em_file outputdata;
 
-  fftw_real *Vol_tmpl_sort, *Volume, *e3, *PointCorr, *sqconv;
+  fftw_real *Vol_tmpl_sort, *Volume, *e3 __attribute__((unused)), *PointCorr, *sqconv;
   fftw_complex *C3, *PointVolume, *PointSq;
   rfftwnd_plan p3, pi3, r3, ri3;
   fftw_real scale;
 
-  struct tm *zeit;
+  struct tm *zeit __attribute__((unused));
   struct tm start;
   char name[200];
   int Rx_max, Ry_max, Rz_max;
@@ -55,12 +56,12 @@ main (int argc, char *argv[])
   int Vx_max, Vy_max, Vz_max;
   float Phi, Psi, Theta, winkel_lauf, nvox;
   float *Rot_tmpl, *Vol_tmpl, *Rot_mask;
-  int i, j, k, tmpx, tmpy, tmpz,lauf_pe, ksub;
-  int ijk;
+  int i, j, k, tmpx __attribute__((unused)), tmpy __attribute__((unused)), tmpz __attribute__((unused)),lauf_pe, ksub __attribute__((unused));
+  int ijk __attribute__((unused));
   int lauf;
-  float max, eps;
-  time_t lt;
-  float Ctmp, Ctmpim, Dtmp, Dtmpim;
+  float max __attribute__((unused)), eps;
+  time_t lt __attribute__((unused));
+  float Ctmp __attribute__((unused)), Ctmpim __attribute__((unused)), Dtmp __attribute__((unused)), Dtmpim __attribute__((unused));
   int dim_fft;
   int sub[3],range[3],range_sub[3],subc[3],offset[3],dimarray[3];
   int FullVolume_dims[3];
@@ -74,11 +75,11 @@ main (int argc, char *argv[])
   int Phi_max, Psi_max, Theta_max;
   int Phi_min, Psi_min, Theta_min;
   int Phi_step, Psi_step, Theta_step;
-  int Theta_winkel_start, Psi_winkel_start, Phi_winkel_start;
+  int Theta_winkel_start __attribute__((unused)), Psi_winkel_start __attribute__((unused)), Phi_winkel_start __attribute__((unused));
   int Theta_winkel_nr, Psi_winkel_nr, Phi_winkel_nr;
-  int Theta_winkel_end, Psi_winkel_end, Phi_winkel_end;
+  int Theta_winkel_end __attribute__((unused)), Psi_winkel_end __attribute__((unused)), Phi_winkel_end __attribute__((unused));
   int Theta_steps, Psi_steps, Phi_steps;
-  float Theta_winkel_rest_nr, Psi_winkel_rest_nr, Phi_winkel_rest_nr;
+  float Theta_winkel_rest_nr, Psi_winkel_rest_nr, Phi_winkel_rest_nr __attribute__((unused));
   float tempccf;
   float *Ergebnis, *conv;
   float cycles;
@@ -215,7 +216,7 @@ main (int argc, char *argv[])
       (Vol_tmpl_sort = (fftw_real *) calloc (Vz_max*Vy_max*2*(Vx_max / 2 + 1), sizeof (fftw_real) )))
     {
       printf ("Memory allocation  failure in Volume_tmpl_sort!!!");
-      printf ("Nx = %i, Ny = %i, Nz = %i, bytes = %i \n",2 *(Vx_max / 2 + 1),Vy_max, Vz_max, sizeof (fftw_real));
+      printf ("Nx = %i, Ny = %i, Nz = %i, bytes = %li \n",2 *(Vx_max / 2 + 1),Vy_max, Vz_max, sizeof (fftw_real));
       fflush (stdout);
       MPI_Finalize();
       exit (1);
@@ -513,7 +514,7 @@ main (int argc, char *argv[])
       printf ("OMNIMATCH finished succesfully. Good luck.");
       tack (&start); fflush(stdout);
     }
-  MPI_Finalize();
+  return MPI_Finalize();
 
   /* end main */
 }

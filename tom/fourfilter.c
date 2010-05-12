@@ -28,7 +28,7 @@
 void lowpass(fftw_complex *vol_four, float R, float smooth, int Nx, int Ny, int Nz, fftw_real scale)
 {
   int ikx, iky, ikz, Nx_red, Ny_red, Nz_red;
-  float dist, scf;
+  float dist, scf = 0.0f;
   fftw_complex zero; 
 
   Nx_red = (int) Nx/2 +1;
@@ -114,7 +114,7 @@ void lowpass(fftw_complex *vol_four, float R, float smooth, int Nx, int Ny, int 
 void bandpass(fftw_complex *vol_four, float R_down, float R_up, float smooth, int Nx, int Ny, int Nz, fftw_real scale)
 {
   int ikx, iky, ikz, Nx_red, Ny_red, Nz_red;
-  float dist, scf;
+  float dist = 0.0f, scf = 0.0f;
   fftw_complex zero; 
 
   Nx_red = (int) Nx/2 +1;

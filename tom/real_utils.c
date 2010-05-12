@@ -20,10 +20,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <tom.h> // tom_rotate3d()
 /* routine symmetrizes volume along z-axis  */
 void symref(float *volume, int nfold, int Nx, int Ny, int Nz)
 {
-  float dphi, phi, psi, the, zero;
+  float dphi, phi, psi, the, zero __attribute__((unused));
   float *tmpvol, *tmpvol2, *symvol;
   int iz, iy, ix, irot, irun;
   
@@ -215,6 +216,6 @@ void limitz(float *volume, int Nx, int Ny, int Nz, float low, float hi)
 
 
 /* rotates point with coordinates (x,y,z) by Euler angles phi, psi, the */
-void pointrotate(float x, float y, float z, float phi, float psi, float theta)
+/*void pointrotate(float x, float y, float z, float phi, float psi, float theta)
 {
-}
+}*/

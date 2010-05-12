@@ -58,7 +58,7 @@ void read_em (char *infile, struct em_file *inemdata)
 {
     FILE *input = 0;
     long size;
-	int lauf;
+// 	int lauf;
     if ((input = fopen (infile, "r")) == 0)
     {
 	printf("could not open %s\n", infile);
@@ -104,8 +104,8 @@ void read_em (char *infile, struct em_file *inemdata)
 void read_em_header (char *infile, struct em_file *inemdata)
 {
     FILE *input = 0;
-    long size;
-	int lauf;
+//     long size;
+// 	int lauf;
     if ((input = fopen (infile, "r")) == 0)
     {
 	printf("could not open %s\n in readm_em_header", infile);
@@ -133,7 +133,7 @@ void read_em_subregion (char *infile, struct em_file *inemdata, int *nr, int  *a
     long int s1, s2, s3;
     int area_d[3];
     long int xy_dims,fseek_merker;
-    unsigned int laufin;
+//     unsigned int laufin;
     int size_area;
     int count;
  
@@ -206,7 +206,7 @@ void read_em_subregion (char *infile, struct em_file *inemdata, int *nr, int  *a
 
 void write_em (char *outfile, struct em_file *outemdata)
 {
-    int i;
+//     int i;
     long size;
     FILE *output = 0;
     
@@ -241,12 +241,12 @@ void write_em (char *outfile, struct em_file *outemdata)
 void write_em_subregion (char *outfile, struct em_file *outemdata, int *nr, int *area)
 {
   FILE *output = 0;
-  long size;
+//   long size;
   int lauf, ilaufx, ilaufz, laufy ;
   long int s1, s2, s3;
   int area_d[3];
   long int xy_dims,fseek_merker;
-  unsigned int laufin;
+//   unsigned int laufin;
   int size_area;
   int count;
   
@@ -299,12 +299,12 @@ void write_em_subregion (char *outfile, struct em_file *outemdata, int *nr, int 
 void write_em_subsubregion (char *outfile, struct em_file *outemdata, int *nr, int *area,int *offset,int *dimarray)
 {
   FILE *output = 0;
-  long size;
+//   long size;
   int lauf, ilaufx, ilaufz, laufy ;
   long int s1, s2, s3;
   int area_d[3],ioffset[3];
-  long int xy_dims,fseek_merker,xy_offset,xy_dimarray,initial_offset;
-  unsigned int laufin;
+  long int xy_dims,fseek_merker,/*xy_offset,*/xy_dimarray,initial_offset;
+//   unsigned int laufin;
   int size_area;
   int count;
   /* outfile      filename
@@ -370,7 +370,7 @@ void write_em_subsubregion (char *outfile, struct em_file *outemdata, int *nr, i
 
 void create_em (char *outfile, int *nr)
 {   unsigned char magic[1];
-    int f_magic;
+//     int f_magic;
     char dummya[2];
     unsigned char type[1];
     int dims[3];
@@ -379,7 +379,7 @@ void create_em (char *outfile, int *nr)
     char dummyb[256];
     float *floatdata;
     FILE *output = 0;
-    long size;
+//     long size;
     int lauf;
     
     if ((output = fopen (outfile, "wb")) == 0)

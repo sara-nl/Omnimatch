@@ -46,7 +46,7 @@
 
 void tom_rotate3d( float *O, float *I, float Phi, float Psi, float The, int Ox_max, int Oy_max, int Oz_max)
 {
-  /* Output Volumen O, Input Volumen I, Winkel the, phi, psi, Groesse der Felder xmin...zmax */
+  /* Input Volumen I, Output Volumen O, Winkel the, phi, psi, Groesse der Felder xmin...zmax */
   float rotation_matrix[4][4];
   float X[4];
   float New_pt[4];

@@ -21,11 +21,11 @@
 // volume ist pasted into the MIDDLE for EVEN and ODD dimensions of Ox-max
 // odd dimension of V_x not tested
 // FF 07/11/02
-void pastes(float *I, float *O,int Ox_min, int Oy_min, int Oz_min, int Ox_max, int Oy_max, int Oz_max,int Vx_max)
+void pastes(float *I, float *O,int Ox_min __attribute__((unused)), int Oy_min __attribute__((unused)), int Oz_min __attribute__((unused)), int Ox_max, int Oy_max, int Oz_max,int Vx_max)
 {
 int laufx, laufy, laufz;
-int laufp, laufry, laufrz;
-int Vx_max_2,Vy_max_2,Vz_max_2,Ox_max_2,Oy_max_2,Oz_max_2;
+int laufp/*, laufry, laufrz*/;
+int Vx_max_2,Vy_max_2 __attribute__((unused)),Vz_max_2 __attribute__((unused)),Ox_max_2,Oy_max_2,Oz_max_2;
 int i,j,k;
 Ox_max_2= Ox_max /2;
 //Ox_max_2= Ox_max /2 + Ox_max % 2 ;
