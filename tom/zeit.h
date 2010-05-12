@@ -5,7 +5,7 @@ lt=time(NULL);
 start=localtime(&lt);
 /* end tick */
 }
-void tack(struct tm *start)
+void tack(struct tm *start __attribute__((unused)))
 {
 struct tm *stop;
 time_t lt;

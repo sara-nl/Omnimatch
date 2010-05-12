@@ -15,7 +15,7 @@ struct em_file {
     int *intdata;
     float *floatdata;
 };
-
+void create_em (char *outfile, int *nr);
 void read_em (char *infile, struct em_file *inemdata);
 void read_em_header (char *infile, struct em_file *inemdata);
 void read_em_subregion (char *infile, struct em_file *inemdata, int *nr, int *area);
@@ -47,5 +47,5 @@ float variance(float *volume, int Nx, int Ny, int Nz);
 void norm(float *volume, int Nx, int Ny, int Nz);
 void limit(float *volume, int Nx, int Ny, int Nz, float low, float hi);
 void limitz(float *volume, int Nx, int Ny, int Nz, float low, float hi);
-void pointrotate(float x, float y, float z, float phi, float psi, float theta);
+/*void pointrotate(float x, float y, float z, float phi, float psi, float theta);*/
 
