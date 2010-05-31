@@ -1,4 +1,4 @@
 TEMPLATE = subdirs
-SUBDIRS = tom src
+SUBDIRS = tom omnicuda src
 CONFIG -= gui qt core
 CONFIG += ordered
