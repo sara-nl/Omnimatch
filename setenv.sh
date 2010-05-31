@@ -2,6 +2,7 @@
 
 module load openmpi/gnu
 module load fftw2/openmpi/gnu
+module load cuda
 #module load openmpi/intel
 #module load fftw2/openmpi/intel
 #module load gperftools
