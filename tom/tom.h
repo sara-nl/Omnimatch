@@ -1,4 +1,6 @@
+#include <fftw.h>
 #include <rfftw.h>
+
 // tom_rotate3d.c  by S.N.
 void tom_rotate3d( float *O, float *I, float Phi, float Psi, float The, int Ox_max, int Oy_max, int Oz_max);
 void rotate3d( float *O, float *I, float Phi, float Psi, float The, int Ox_max, int Oy_max, int Oz_max);
@@ -25,7 +27,9 @@ void write_em_subsubregion (char *outfile, struct em_file *outemdata, int *nr, i
 // pastes.c        by S.N. modified by F.F.
 void pastes(float *I, float *O,int Ox_min, int Oy_min, int Oz_min, int Ox_max, int Oy_max, int Oz_max,int Vx_max);
 // energizer.c     by F.F.
-float energizer (int, int, int, float *, float *, float *, rfftwnd_plan, rfftwnd_plan);
+// PieterB: The original declaration had an int as the third parameter, but this was not consistent with the implementation!
+//float energizer (int, int, int, float *, float *, float *, rfftwnd_plan, rfftwnd_plan);
+float energizer (int, int, float, float *, float *, float *, rfftwnd_plan, rfftwnd_plan);
 int count_voxel (int, float *, float);
 void cross(float *volinout, int Vx_max);
 void shift(fftw_complex *vol_four, float dx, float dy, float dz, int Nx, int Ny, int Nz);

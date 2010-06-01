@@ -24,6 +24,7 @@
    traditional K&R versions, along with #ifdef macros to select the
    correct version.  *This* file contains only ANSI C.               */
 
+#include <tom.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>

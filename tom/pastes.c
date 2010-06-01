@@ -17,6 +17,8 @@
  * along with Omnimatch.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
+#include <tom.h>
+
 // routine pastes volume of dimension Ox_max into bigger volume (dim Vx_max)
 // volume ist pasted into the MIDDLE for EVEN and ODD dimensions of Ox-max
 // odd dimension of V_x not tested

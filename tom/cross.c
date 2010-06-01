@@ -17,6 +17,8 @@
  * along with Omnimatch.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
+#include <tom.h>
+
 void cross( float *volinout, int Vx_max )
 /* procedure exchanges quadrants
 only for cubic volumes of even dimensions

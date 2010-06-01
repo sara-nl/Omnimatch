@@ -17,10 +17,11 @@
  * along with Omnimatch.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
+#include <tom.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <tom.h> // tom_rotate3d()
+
 /* routine symmetrizes volume along z-axis  */
 void symref( float *volume, int nfold, int Nx, int Ny, int Nz ) {
   float dphi, phi, psi, the, zero __attribute__( ( unused ) );

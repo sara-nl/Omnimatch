@@ -24,8 +24,6 @@
 #include <time.h>
 #include <tom.h>
 #include <zeit.h>
-#include <fftw.h>
-#include <rfftw.h>
 #include <mpi.h>
 
 
