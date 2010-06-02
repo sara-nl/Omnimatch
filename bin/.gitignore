@@ -1,4 +1,4 @@
-omnimatch.bin
+*.bin
 *.err
 *.out
 *.ccf

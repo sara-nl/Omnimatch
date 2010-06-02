@@ -1,5 +1,5 @@
-#include <fftw.h>
-#include <rfftw.h>
+#include <sfftw.h>
+#include <srfftw.h>
 
 // tom_rotate3d.c  by S.N.
 void tom_rotate3d( float *O, float *I, float Phi, float Psi, float The, int Ox_max, int Oy_max, int Oz_max);
