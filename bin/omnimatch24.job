@@ -16,9 +16,9 @@ time mpiexec \
 	./omnimatch \
 	../data/testvol.em \
 	../data/templ.em \
-	testvol24-sp \
+	testvol24-dp \
 	0 180 20 0 180 20 0 180 20 \
 	../data/psf.em \
 	../data/mask_15.em \
 	128 \
-	>testvol24.out 2>testvol24.err
+	>testvol24-dp.out 2>testvol24-dp.err
