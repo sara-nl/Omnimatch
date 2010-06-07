@@ -6,17 +6,26 @@ CONFIG -= qt
 DESTDIR = ../bin
 TARGET = omnimatch.bin
 SOURCES = omnimatch.c
-INCLUDEPATH += ../omnicuda \
-  ../tom
 
-TARGETDEPS += ../omnicuda/libomnicuda.a \
-  ../tom/libtom.a
+
+
+QMAKE_LINK = gcc
+
+
+
+INCLUDEPATH += ../sarafft \
+  ../tom
 
 LIBS += ../omnicuda/libomnicuda.a \
   ../tom/libtom.a \
+  ../sarafft/libsarafft.a \
   -lcufft \
   -lcuda \
   -lmpi \
   -lrfftw \
   -lfftw
+
+TARGETDEPS += ../sarafft/libsarafft.a \
+  ../omnicuda/libomnicuda.a \
+  ../tom/libtom.a
 

@@ -3,7 +3,8 @@ TEMPLATE = lib
 #QMAKE_CC = cc
 TARGET = tom
 CONFIG -= qt
-CONFIG += static
+CONFIG += static \
+ staticlib
 HEADERS += nrutil.h \
 	tom.h \
 	zeit.h
@@ -16,3 +17,7 @@ SOURCES += cross.c \
 	shift.c \
 	sort4fftw.c \
 	tom_rotate3d.c
+TARGETDEPS += ../sarafft/libsarafft.a
+
+INCLUDEPATH += ../sarafft
+
