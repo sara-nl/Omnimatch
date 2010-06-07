@@ -23,15 +23,20 @@
 #include <math.h>
 #include <time.h>
 #include <tom.h>
-#include <zeit.h>
 #include <mpi.h>
 #include <sarafft.h>
-
 
 MPI_Status status;
 MPI_Request request, request1, request2, request3, request4;
 
 int myrank, mysize, tag = 99;
+
+void tack()
+{
+  time_t lt = time( NULL );
+  struct tm *stop = localtime( &lt );
+  printf( "Time : %i:%i:%i\n", stop->tm_hour, stop->tm_min, stop->tm_sec );
+}
 
 int main ( int argc, char *argv[] ) {
   struct em_file inputdata1;
@@ -40,10 +45,10 @@ int main ( int argc, char *argv[] ) {
   struct em_file inputdata4;
   struct em_file outputdata;
 
-  fftw_real *Vol_tmpl_sort, *Volume, *e3 __attribute__ ( ( unused ) ), *PointCorr, *sqconv;
-  fftw_complex *C3, *PointVolume, *PointSq;
+  sarafft_real *Vol_tmpl_sort, *Volume, *e3 __attribute__ ( ( unused ) ), *PointCorr, *sqconv;
+  sarafft_complex *C3, *PointVolume, *PointSq;
   rfftwnd_plan p3, pi3, r3, ri3;
-  fftw_real scale;
+  sarafft_real scale;
 
   struct tm *zeit __attribute__ ( ( unused ) );
   struct tm start;
@@ -182,12 +187,12 @@ int main ( int argc, char *argv[] ) {
   if ( myrank == 0 ) {
     printf ( "Plans for FFTW created \n" );fflush ( stdout );
   }
-  Volume = ( fftw_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( fftw_real ) );
+  Volume = ( sarafft_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( sarafft_real ) );
   Rot_tmpl = ( float * ) malloc ( sizeof ( float ) * Rx_max * Ry_max * Rz_max );
   Rot_mask = ( float * ) malloc ( sizeof ( float ) * Rx_max * Ry_max * Rz_max );
   Vol_tmpl = ( float * ) malloc ( sizeof ( float ) * Vx_max * Vy_max * Vz_max );
   conv = ( float * ) malloc ( sizeof ( float ) * Vx_max * Vy_max * Vz_max );
-  sqconv = ( fftw_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( fftw_real ) );
+  sqconv = ( sarafft_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( sarafft_real ) );
   if ( !
        ( inputdata1.floatdata =
            ( float * ) malloc ( sizeof ( float ) * Vx_max * Vy_max * Vz_max ) ) ) {
@@ -206,9 +211,9 @@ int main ( int argc, char *argv[] ) {
   }
 
   if ( !
-       ( Vol_tmpl_sort = ( fftw_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( fftw_real ) ) ) ) {
+       ( Vol_tmpl_sort = ( sarafft_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( sarafft_real ) ) ) ) {
     printf ( "Memory allocation  failure in Volume_tmpl_sort!!!" );
-    printf ( "Nx = %i, Ny = %i, Nz = %i, bytes = %li \n", 2 * ( Vx_max / 2 + 1 ), Vy_max, Vz_max, sizeof ( fftw_real ) );
+    printf ( "Nx = %i, Ny = %i, Nz = %i, bytes = %li \n", 2 * ( Vx_max / 2 + 1 ), Vy_max, Vz_max, sizeof ( sarafft_real ) );
     fflush ( stdout );
     MPI_Finalize();
     exit ( 1 );
@@ -339,13 +344,13 @@ int main ( int argc, char *argv[] ) {
           scale = 1.0 / ( ( double ) Vx_max * ( double ) Vy_max * ( double ) Vz_max );
           sort4fftw ( &Vol_tmpl_sort[0], &Vol_tmpl[0], Vx_max, Vy_max, Vz_max );
           rfftwnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
-          PointVolume = ( fftw_complex * ) & Volume[0];
-          C3 = ( fftw_complex * ) & Vol_tmpl_sort[0];
+          PointVolume = ( sarafft_complex * ) & Volume[0];
+          C3 = ( sarafft_complex * ) & Vol_tmpl_sort[0];
           /* Correlation */
           correl ( &PointVolume[0], &C3[0], Vx_max, Vy_max, Vz_max, scale );
           /* back to real space */
           rfftwnd_one_complex_to_real ( pi3, &C3[0], NULL );
-          PointCorr = ( fftw_real * ) & C3[0];
+          PointCorr = ( sarafft_real * ) & C3[0];
           /* reorder data */
           sortback4fftw ( &PointCorr[0], &Ergebnis[0], Vx_max, Vy_max, Vz_max );
           // cross
@@ -356,13 +361,13 @@ int main ( int argc, char *argv[] ) {
           /* 1st local mean */
           sort4fftw ( &Vol_tmpl_sort[0], &Vol_tmpl[0], Vx_max, Vy_max, Vz_max );
           rfftwnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
-          C3 = ( fftw_complex * ) & Vol_tmpl_sort[0];
+          C3 = ( sarafft_complex * ) & Vol_tmpl_sort[0];
           /* Convolution of volume and mask */
           scale = 1.0 / ( ( double ) Vx_max * ( double ) Vy_max * ( double ) Vz_max );
           /*convolve( &PointVolume[0], &C3[0], Vx_max, Vy_max, Vz_max, scale);*/
           correl ( &PointVolume[0], &C3[0], Vx_max, Vy_max, Vz_max, scale );
           rfftwnd_one_complex_to_real ( pi3, &C3[0], NULL );
-          PointCorr = ( fftw_real * ) & C3[0];
+          PointCorr = ( sarafft_real * ) & C3[0];
           /* reorder data (FFTW) */
           sortback4fftw ( &PointCorr[0], &conv[0], Vx_max, Vy_max, Vz_max );
           /* 2nd : convolution of square and resorting*/
@@ -370,12 +375,12 @@ int main ( int argc, char *argv[] ) {
           pastes ( &Rot_mask[0], &Vol_tmpl[0], 1, 1, 1, Rx_max, Ry_max, Rz_max, Vx_max );
           sort4fftw ( &Vol_tmpl_sort[0], &Vol_tmpl[0], Vx_max, Vy_max, Vz_max );
           rfftwnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
-          C3 = ( fftw_complex * ) & Vol_tmpl_sort[0];
-          PointSq = ( fftw_complex * ) & sqconv[0];// set pointer to FFT of square
+          C3 = ( sarafft_complex * ) & Vol_tmpl_sort[0];
+          PointSq = ( sarafft_complex * ) & sqconv[0];// set pointer to FFT of square
           /*convolve( &PointSq[0], &C3[0], Vx_max, Vy_max, Vz_max, scale);*/
           correl ( &PointSq[0], &C3[0], Vx_max, Vy_max, Vz_max, scale );
           rfftwnd_one_complex_to_real ( pi3, &C3[0], NULL );
-          PointCorr = ( fftw_real * ) & C3[0];
+          PointCorr = ( sarafft_real * ) & C3[0];
           lauf = 0;
           for ( k = 0; k < Vz_max; k++ ) {
             for ( j = 0; j < Vy_max; j++ ) {

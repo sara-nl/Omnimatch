@@ -94,8 +94,8 @@ float energizer
   rfftwnd_plan ri3 ) {
   Rx_min += 0; // Suppress warning for unused parameter
   float rms_wedge;
-  fftw_real  *wedge, *Rot_tmpl_ft, *Rreal;
-  fftw_complex *W3, *R3;
+  sarafft_real  *wedge, *Rot_tmpl_ft, *Rreal;
+  sarafft_complex *W3, *R3;
   int i, j, k;
   int ijk;
   int lauf;
@@ -103,9 +103,9 @@ float energizer
 
   //printf("Rx_min: %d, Rx_max: %d, n: %d\n", Rx_min, Rx_max, n);
   //  printf(" N (in energizer) %d \n", n);
-  Rot_tmpl_ft = ( fftw_real * ) malloc ( sizeof ( fftw_real ) * Rx_max * Rx_max * 2 *
+  Rot_tmpl_ft = ( sarafft_real * ) malloc ( sizeof ( sarafft_real ) * Rx_max * Rx_max * 2 *
                                          ( Rx_max / 2 + 1 ) );
-  wedge = ( fftw_real * ) malloc ( sizeof ( fftw_real ) * Rx_max * Rx_max * 2 *
+  wedge = ( sarafft_real * ) malloc ( sizeof ( sarafft_real ) * Rx_max * Rx_max * 2 *
                                    ( Rx_max / 2 + 1 ) );
   lauf = 0;
   for ( i = 0; i < Rx_max; ++i ) {
@@ -129,20 +129,20 @@ float energizer
   rfftwnd_one_real_to_complex ( r3, &Rot_tmpl_ft[0], NULL );
 
   rfftwnd_one_real_to_complex ( r3, &wedge[0], NULL );
-  W3 = ( fftw_complex * ) & wedge[0];
-  R3 = ( fftw_complex * ) & Rot_tmpl_ft[0];
+  W3 = ( sarafft_complex * ) & wedge[0];
+  R3 = ( sarafft_complex * ) & Rot_tmpl_ft[0];
   scale = 1.0 / ( Rx_max * Rx_max * Rx_max );
   for ( i = 0; i < Rx_max; ++i ) {
     for ( j = 0; j < Rx_max; ++j ) {
       for ( k = 0; k < Rx_max / 2 + 1; ++k ) {
         ijk = k + ( Rx_max / 2 + 1 ) * ( j + i * Rx_max );
-        Wtmp = W3[ijk].re;
-        Wtmpim = W3[ijk].im;
-        Rtmp = R3[ijk].re;
-        Rtmpim = R3[ijk].im;
-        R3[ijk].re = ( W3[ijk].re * R3[ijk].re
-                       - W3[ijk].im * R3[ijk].im ) * scale;
-        R3[ijk].im = ( Wtmp * Rtmpim + Wtmpim * Rtmp ) * scale;
+        Wtmp = c_re(W3[ijk]);
+        Wtmpim = c_im(W3[ijk]);
+        Rtmp = c_re(R3[ijk]);
+        Rtmpim = c_im(R3[ijk]);
+        c_re(R3[ijk]) = ( c_re(W3[ijk]) * c_re(R3[ijk])
+                       - c_im(W3[ijk]) * c_im(R3[ijk]) ) * scale;
+        c_im(R3[ijk]) = ( Wtmp * Rtmpim + Wtmpim * Rtmp ) * scale;
         /* Convolution of Image and Filter */
 
       }
@@ -150,7 +150,7 @@ float energizer
   }
   rfftwnd_one_complex_to_real ( ri3, &R3[0], NULL );
 
-  Rreal = ( fftw_real * ) & R3[0];
+  Rreal = ( sarafft_real * ) & R3[0];
   lauf = 0;
   SQSUM = 0;
   SUM = 0;
@@ -197,15 +197,15 @@ float prepref( int Rx_min, // unused?
                rfftwnd_plan ri3 ) {
   Rx_min += 0;
   float rms_wedge, nvox;
-  fftw_real  *wedge, *Rot_tmpl_ft, *Rreal;
-  fftw_complex *W3, *R3;
+  sarafft_real  *wedge, *Rot_tmpl_ft, *Rreal;
+  sarafft_complex *W3, *R3;
   int i, j, k;
   int ijk;
   int lauf;
   float Rtmp, Rtmpim, Wtmp, Wtmpim, scale, SUM, SQSUM;
 
-  Rot_tmpl_ft = ( fftw_real * ) malloc ( sizeof ( fftw_real ) * Rx_max * Rx_max * 2 * ( Rx_max / 2 + 1 ) );
-  wedge = ( fftw_real * ) malloc ( sizeof ( fftw_real ) * Rx_max * Rx_max * 2 * ( Rx_max / 2 + 1 ) );
+  Rot_tmpl_ft = ( sarafft_real * ) malloc ( sizeof ( sarafft_real ) * Rx_max * Rx_max * 2 * ( Rx_max / 2 + 1 ) );
+  wedge = ( sarafft_real * ) malloc ( sizeof ( sarafft_real ) * Rx_max * Rx_max * 2 * ( Rx_max / 2 + 1 ) );
   lauf = 0;
   for ( i = 0; i < Rx_max; ++i ) {
     for ( j = 0; j < Rx_max; ++j ) {
@@ -218,26 +218,26 @@ float prepref( int Rx_min, // unused?
   }
   rfftwnd_one_real_to_complex ( r3, &Rot_tmpl_ft[0], NULL );
   rfftwnd_one_real_to_complex ( r3, &wedge[0], NULL );
-  W3 = ( fftw_complex * ) & wedge[0];
-  R3 = ( fftw_complex * ) & Rot_tmpl_ft[0];
+  W3 = ( sarafft_complex * ) & wedge[0];
+  R3 = ( sarafft_complex * ) & Rot_tmpl_ft[0];
   scale = 1.0 / ( Rx_max * Rx_max * Rx_max );
   for ( i = 0; i < Rx_max; ++i ) {
     for ( j = 0; j < Rx_max; ++j ) {
       for ( k = 0; k < Rx_max / 2 + 1; ++k ) {
         ijk = k + ( Rx_max / 2 + 1 ) * ( j + i * Rx_max );
-        Wtmp = W3[ijk].re;
-        Wtmpim = W3[ijk].im;
-        Rtmp = R3[ijk].re;
-        Rtmpim = R3[ijk].im;
-        R3[ijk].re = ( W3[ijk].re * R3[ijk].re
-                       - W3[ijk].im * R3[ijk].im ) * scale;
-        R3[ijk].im = ( Wtmp * Rtmpim + Wtmpim * Rtmp ) * scale;
+        Wtmp = c_re(W3[ijk]);
+        Wtmpim = c_im(W3[ijk]);
+        Rtmp = c_re(R3[ijk]);
+        Rtmpim = c_im(R3[ijk]);
+        c_re(R3[ijk]) = ( c_re(W3[ijk]) * c_re(R3[ijk])
+                       - c_im(W3[ijk]) * c_im(R3[ijk]) ) * scale;
+        c_im(R3[ijk]) = ( Wtmp * Rtmpim + Wtmpim * Rtmp ) * scale;
         /* Convolution (!) of Image and Filter */
       }
     }
   }
   rfftwnd_one_complex_to_real ( ri3, &R3[0], NULL );
-  Rreal = ( fftw_real * ) & R3[0];
+  Rreal = ( sarafft_real * ) & R3[0];
   lauf = 0;
   SQSUM = 0;
   SUM = 0;
@@ -331,8 +331,8 @@ float energizer_norot
         rfftwnd_plan ri3)
 {
   float rms_wedge;
-  fftw_real  *wedge, *Rot_tmpl_ft, *Rreal;
-  fftw_complex *W3, *R3;
+  sarafft_real  *wedge, *Rot_tmpl_ft, *Rreal;
+  sarafft_complex *W3, *R3;
   int i, j, k;
   int ijk;
   int lauf;

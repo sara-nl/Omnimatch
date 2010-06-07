@@ -23,7 +23,7 @@
 #include <math.h>
 
 /* routine sorts floatdata for fftw IN PLACE */
-void sort4fftw( fftw_real *ext_array, float *floatdata, int Nx, int Ny, int Nz ) {
+void sort4fftw( sarafft_real *ext_array, float *floatdata, int Nx, int Ny, int Nz ) {
   int Nx_red, iz, ix, iy, lauf;
 
   Nx_red = ( int ) Nx / 2 + 1;
@@ -39,7 +39,7 @@ void sort4fftw( fftw_real *ext_array, float *floatdata, int Nx, int Ny, int Nz )
 }
 
 /* reverse sorting after FFTW in place */
-void sortback4fftw( fftw_real *ext_array, float *floatdata, int Nx, int Ny, int Nz ) {
+void sortback4fftw( sarafft_real *ext_array, float *floatdata, int Nx, int Ny, int Nz ) {
   int Nx_red, iz, ix, iy, lauf;
 
   Nx_red = ( int ) Nx / 2 + 1;

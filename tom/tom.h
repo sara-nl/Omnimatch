@@ -1,5 +1,23 @@
-#include <sfftw.h>
-#include <srfftw.h>
+/**************************************************************************
+ * Copyright (C) 2010 W. Baumeister, MPI BioChemistry, Martinsried, Germany
+ *
+ * This file is part of Omnimatch.
+ *
+ * Omnimatch is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Omnimatch is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Omnimatch.  If not, see <http://www.gnu.org/licenses/>.
+ **************************************************************************/
+
+#include <sarafft.h>
 
 // tom_rotate3d.c  by S.N.
 void tom_rotate3d( float *O, float *I, float Phi, float Psi, float The, int Ox_max, int Oy_max, int Oz_max);
@@ -32,18 +50,18 @@ void pastes(float *I, float *O,int Ox_min, int Oy_min, int Oz_min, int Ox_max, i
 float energizer (int, int, float, float *, float *, float *, rfftwnd_plan, rfftwnd_plan);
 int count_voxel (int, float *, float);
 void cross(float *volinout, int Vx_max);
-void shift(fftw_complex *vol_four, float dx, float dy, float dz, int Nx, int Ny, int Nz);
+void shift(sarafft_complex *vol_four, float dx, float dy, float dz, int Nx, int Ny, int Nz);
 float sumvoxel (int, int, int, float *);/* sums voxels > eps of inputarray  */
 float prepref(int Rx_min, int Rx_max, float eps, float *Rot_tmpl, float *inputdata, float *mask, rfftwnd_plan, rfftwnd_plan);
 /* prepare reference:  */
 /* sort4fftw  */
-void sort4fftw(fftw_real *ext_array, float *floatdata, int Nx, int Ny, int Nz);
-void sortback4fftw(fftw_real *ext_array, float *floatdata, int Nx, int Ny, int Nz);
+void sort4fftw(sarafft_real *ext_array, float *floatdata, int Nx, int Ny, int Nz);
+void sortback4fftw(sarafft_real *ext_array, float *floatdata, int Nx, int Ny, int Nz);
 /* four_filter - filters in Fourier space */
-void lowpass(fftw_complex *vol_four, float R, float smooth, int Nx, int Ny, int Nz, fftw_real scale);
-void bandpass(fftw_complex *vol_four, float R_down, float R_up, float smooth, int Nx, int Ny, int Nz, fftw_real scale);
-void correl(fftw_complex *vol_four, fftw_complex *ref_four, int Nx, int Ny, int Nz, fftw_real scale);
-void convolve(fftw_complex *vol_four, fftw_complex *ref_four, int Nx, int Ny, int Nz, fftw_real scale);
+void lowpass(sarafft_complex *vol_four, float R, float smooth, int Nx, int Ny, int Nz, sarafft_real scale);
+void bandpass(sarafft_complex *vol_four, float R_down, float R_up, float smooth, int Nx, int Ny, int Nz, sarafft_real scale);
+void correl(sarafft_complex *vol_four, sarafft_complex *ref_four, int Nx, int Ny, int Nz, sarafft_real scale);
+void convolve(sarafft_complex *vol_four, sarafft_complex *ref_four, int Nx, int Ny, int Nz, sarafft_real scale);
 /* correlation is written to ref_four */
 /* real_utils - real space utilities */
 void symref(float *volume, int nfold, int Nx, int Ny, int Nz);

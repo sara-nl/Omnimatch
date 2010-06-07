@@ -5,9 +5,7 @@ TARGET = tom
 CONFIG -= qt
 CONFIG += static \
  staticlib
-HEADERS += nrutil.h \
-	tom.h \
-	zeit.h
+HEADERS += tom.h
 SOURCES += cross.c \
 	emfile.c \
 	energizer.c \

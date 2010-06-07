@@ -13,19 +13,22 @@ QMAKE_LINK = gcc
 
 
 
-INCLUDEPATH += ../sarafft \
-  ../tom
 
-LIBS += ../omnicuda/libomnicuda.a \
+
+
+INCLUDEPATH += ../tom \
+  ../sarafft
+
+LIBS += ../sarafft/libsarafft.a \
   ../tom/libtom.a \
-  ../sarafft/libsarafft.a \
+  ../omnicuda/libomnicuda.a \
   -lcufft \
   -lcuda \
   -lmpi \
-  -lrfftw \
-  -lfftw
+  -lsrfftw \
+  -lsfftw
 
-TARGETDEPS += ../sarafft/libsarafft.a \
-  ../omnicuda/libomnicuda.a \
-  ../tom/libtom.a
+TARGETDEPS += ../tom/libtom.a \
+  ../sarafft/libsarafft.a \
+  ../omnicuda/libomnicuda.a
 

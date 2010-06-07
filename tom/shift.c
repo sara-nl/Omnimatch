@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include <math.h>
 
-void shift( fftw_complex *vol_four, float dx, float dy, float dz, int Nx, int Ny, int Nz ) {
+void shift( sarafft_complex *vol_four, float dx, float dy, float dz, int Nx, int Ny, int Nz ) {
   int ikx, iky, ikz, irun, Nx_red;
   float pi;
-  fftw_real phase;
-  fftw_real tmp;
+  sarafft_real phase;
+  sarafft_real tmp;
 
 
   pi = 3.14159265359;
@@ -44,9 +44,9 @@ void shift( fftw_complex *vol_four, float dx, float dy, float dz, int Nx, int Ny
         irun = ikx + Nx_red * ( iky + ikz * Ny );
         phase = ( double ) ( -1.0 * ( ikx * dx + iky * dy + ikz * dz ) );
         /* multiply phase exp(i*phase) = cos(phase) + i sin(phase) */
-        tmp = vol_four[irun].re * cos( phase ) -  vol_four[irun].im * sin( phase );
-        vol_four[irun].im = vol_four[irun].im * cos( phase ) +   vol_four[irun].re *  sin( phase );
-        vol_four[irun].re = tmp;
+        tmp = c_re(vol_four[irun]) * cos( phase ) - c_im(vol_four[irun]) * sin( phase );
+        c_im(vol_four[irun]) = c_im(vol_four[irun]) * cos( phase ) + c_re(vol_four[irun]) *  sin( phase );
+        c_re(vol_four[irun]) = tmp;
       }
     }
   }
