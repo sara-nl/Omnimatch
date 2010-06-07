@@ -47,7 +47,7 @@ int main ( int argc, char *argv[] ) {
 
   sarafft_real *Vol_tmpl_sort, *Volume, *e3 __attribute__ ( ( unused ) ), *PointCorr, *sqconv;
   sarafft_complex *C3, *PointVolume, *PointSq;
-  rfftwnd_plan p3, pi3, r3, ri3;
+  sararfftnd_plan p3, pi3, r3, ri3;
   sarafft_real scale;
 
   struct tm *zeit __attribute__ ( ( unused ) );
@@ -176,13 +176,13 @@ int main ( int argc, char *argv[] ) {
   Vx_max = dim_fft;
   Vy_max = dim_fft;
   Vz_max = dim_fft;
-  p3 = rfftw3d_create_plan ( Vx_max, Vy_max, Vz_max, FFTW_REAL_TO_COMPLEX,
+  p3 = sararfft3d_create_plan ( Vx_max, Vy_max, Vz_max, SARAFFT_REAL_TO_COMPLEX,
                              FFTW_MEASURE | FFTW_IN_PLACE );      /*FFTW_ESTIMATE FFTW_MEASURE */
-  pi3 = rfftw3d_create_plan ( Vx_max, Vy_max, Vz_max, FFTW_COMPLEX_TO_REAL,
+  pi3 = sararfft3d_create_plan ( Vx_max, Vy_max, Vz_max, SARAFFT_COMPLEX_TO_REAL,
                               FFTW_MEASURE | FFTW_IN_PLACE );
-  r3 = rfftw3d_create_plan ( Rx_max, Rx_max, Rx_max, FFTW_REAL_TO_COMPLEX,
+  r3 = sararfft3d_create_plan ( Rx_max, Rx_max, Rx_max, SARAFFT_REAL_TO_COMPLEX,
                              FFTW_MEASURE | FFTW_IN_PLACE );      /*FFTW_ESTIMATE FFTW_MEASURE */
-  ri3 = rfftw3d_create_plan ( Rx_max, Rx_max, Rx_max, FFTW_COMPLEX_TO_REAL,
+  ri3 = sararfft3d_create_plan ( Rx_max, Rx_max, Rx_max, SARAFFT_COMPLEX_TO_REAL,
                               FFTW_MEASURE | FFTW_IN_PLACE );
   if ( myrank == 0 ) {
     printf ( "Plans for FFTW created \n" );fflush ( stdout );

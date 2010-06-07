@@ -35,6 +35,15 @@ extern "C" {
 
 typedef fftw_real sarafft_real;
 typedef fftw_complex sarafft_complex;
+typedef rfftwnd_plan sararfftnd_plan;
+typedef enum {
+  SARAFFT_FORWARD  = FFTW_FORWARD,
+  SARAFFT_BACKWARD = FFTW_BACKWARD
+} sarafft_direction;
+#define SARAFFT_REAL_TO_COMPLEX SARAFFT_FORWARD
+#define SARAFFT_COMPLEX_TO_REAL SARAFFT_BACKWARD
+
+sararfftnd_plan sararfft3d_create_plan(int nx, int ny, int nz, sarafft_direction dir, int flags);
 
 #ifdef __cplusplus
 } // extern "C"

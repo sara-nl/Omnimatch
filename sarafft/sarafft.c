@@ -18,3 +18,8 @@
  **************************************************************************/
 
 #include "sarafft.h"
+
+sararfftnd_plan sararfft3d_create_plan(int nx, int ny, int nz, sarafft_direction dir, int flags) {
+  return rfftw3d_create_plan(nx, ny, nz, dir, flags);
+}
+

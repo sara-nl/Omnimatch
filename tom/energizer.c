@@ -90,8 +90,8 @@ float energizer
   float *Rot_tmpl,  // reference to be manipulated
   float *inputdata, // pointspread-function
   float *mask,      // mask
-  rfftwnd_plan r3,
-  rfftwnd_plan ri3 ) {
+  sararfftnd_plan r3,
+  sararfftnd_plan ri3 ) {
   Rx_min += 0; // Suppress warning for unused parameter
   float rms_wedge;
   sarafft_real  *wedge, *Rot_tmpl_ft, *Rreal;
@@ -193,8 +193,8 @@ float prepref( int Rx_min, // unused?
                float *Rot_tmpl,  // reference to be manipulated
                float *inputdata, // pointspread-function
                float *mask,      // mask
-               rfftwnd_plan r3,
-               rfftwnd_plan ri3 ) {
+               sararfftnd_plan r3,
+               sararfftnd_plan ri3 ) {
   Rx_min += 0;
   float rms_wedge, nvox;
   sarafft_real  *wedge, *Rot_tmpl_ft, *Rreal;
@@ -327,8 +327,8 @@ float energizer_norot
         float *Rot_tmpl,  // reference to be manipulated
         float *inputdata, // pointspread-function
         float *mask,      // mask
-        rfftwnd_plan r3,
-        rfftwnd_plan ri3)
+        sararfftnd_plan r3,
+        sararfftnd_plan ri3)
 {
   float rms_wedge;
   sarafft_real  *wedge, *Rot_tmpl_ft, *Rreal;

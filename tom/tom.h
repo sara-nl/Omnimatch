@@ -46,13 +46,13 @@ void write_em_subsubregion (char *outfile, struct em_file *outemdata, int *nr, i
 void pastes(float *I, float *O,int Ox_min, int Oy_min, int Oz_min, int Ox_max, int Oy_max, int Oz_max,int Vx_max);
 // energizer.c     by F.F.
 // PieterB: The original declaration had an int as the third parameter, but this was not consistent with the implementation!
-//float energizer (int, int, int, float *, float *, float *, rfftwnd_plan, rfftwnd_plan);
-float energizer (int, int, float, float *, float *, float *, rfftwnd_plan, rfftwnd_plan);
+//float energizer (int, int, int, float *, float *, float *, sararfftnd_plan, sararfftnd_plan);
+float energizer (int, int, float, float *, float *, float *, sararfftnd_plan, sararfftnd_plan);
 int count_voxel (int, float *, float);
 void cross(float *volinout, int Vx_max);
 void shift(sarafft_complex *vol_four, float dx, float dy, float dz, int Nx, int Ny, int Nz);
 float sumvoxel (int, int, int, float *);/* sums voxels > eps of inputarray  */
-float prepref(int Rx_min, int Rx_max, float eps, float *Rot_tmpl, float *inputdata, float *mask, rfftwnd_plan, rfftwnd_plan);
+float prepref(int Rx_min, int Rx_max, float eps, float *Rot_tmpl, float *inputdata, float *mask, sararfftnd_plan, sararfftnd_plan);
 /* prepare reference:  */
 /* sort4fftw  */
 void sort4fftw(sarafft_real *ext_array, float *floatdata, int Nx, int Ny, int Nz);
