@@ -17,11 +17,10 @@
  * along with Omnimatch.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
+#include <tom.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <fftw.h>
-#include <rfftw.h>
 
 /* ------------------------------------countvoxel----------------------------------
 routine counts the non-zero voxels of a volume (cubic!) (e.g. a mask)

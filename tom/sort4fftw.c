@@ -17,11 +17,10 @@
  * along with Omnimatch.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
+#include <tom.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <fftw.h>
-#include <rfftw.h>
 
 /* routine sorts floatdata for fftw IN PLACE */
 void sort4fftw( fftw_real *ext_array, float *floatdata, int Nx, int Ny, int Nz ) {

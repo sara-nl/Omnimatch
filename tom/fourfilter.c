@@ -17,12 +17,11 @@
  * along with Omnimatch.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
+#include <tom.h>
 //#define  pi 3.14159265359
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <fftw.h>
-#include <rfftw.h>
 
 /* Lowpass filter (reduced complex !) */
 void lowpass( fftw_complex *vol_four, float R, float smooth, int Nx, int Ny, int Nz, fftw_real scale ) {

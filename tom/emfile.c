@@ -17,6 +17,7 @@
  * along with Omnimatch.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
+#include <tom.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -38,6 +39,7 @@ typedef int int32;
 
 
 
+/* already defined in tom.h:
 struct em_file {
 
   unsigned char magic[1];
@@ -54,7 +56,7 @@ struct em_file {
   int *intdata;
   float *floatdata;
 };
-
+*/
 
 void read_em ( char *infile, struct em_file *inemdata ) {
   FILE *input = 0;

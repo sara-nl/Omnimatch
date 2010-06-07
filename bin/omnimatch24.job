@@ -8,19 +8,17 @@
 
 cd $HOME/omnimatch/bin
 
-# load the necessary module(s), for example:
-#module load paffinity
-module load fftw2/openmpi/intel
-module load openmpi/intel
-module load c
-#module load gperftools
-
-# determine the number of processors:
-#nprocs=`wc -l < $PBS_NODEFILE`
-# determine the number of nodes:
-#nnodes=`sort $PBS_NODEFILE | uniq | wc -l`
+. ../setenv.sh
 
 # start your program
 cat $PBS_NODESFILE
-time mpiexec ./omnimatch ../data/testvol.em ../data/templ.em testvol24 0 180 20 0 180 20 0 180 20 ../data/psf.em ../data/mask_15.em 128 >testvol24.out 2>testvol24.err
-#mpiexec ./omnimatch.exe
+time mpiexec \
+	./omnimatch \
+	../data/testvol.em \
+	../data/templ.em \
+	testvol24-dp \
+	0 180 20 0 180 20 0 180 20 \
+	../data/psf.em \
+	../data/mask_15.em \
+	128 \
+	>testvol24-dp.out 2>testvol24-dp.err

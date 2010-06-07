@@ -17,12 +17,11 @@
  * along with Omnimatch.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
+#include <tom.h>
 //#define  pi 3.14159265359
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <fftw.h>
-#include <rfftw.h>
 
 void shift( fftw_complex *vol_four, float dx, float dy, float dz, int Nx, int Ny, int Nz ) {
   int ikx, iky, ikz, irun, Nx_red;
