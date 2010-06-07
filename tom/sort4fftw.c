@@ -53,14 +53,3 @@ void sortback4fftw( sarafft_real *ext_array, float *floatdata, int Nx, int Ny, i
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-

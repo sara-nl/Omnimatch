@@ -26,9 +26,16 @@ extern "C" {
 
 #ifdef USE_GPUS
 
-#else // #ifdef USE_GPUS
+#include <cufft.h>
+// TODO: GPU declarations
+typedef cufftReal sarafft_real;
+typedef cufftComplex sarafft_complex;
+typedef cufftHandle sararfftnd_plan;
+typedef cufftType sarafft_direction;
+#define SARAFFT_REAL_TO_COMPLEX CUFFT_R2C
+#define SARAFFT_COMPLEX_TO_REAL CUFFT_C2R
 
-#endif // #ifdef USE_GPUS
+#else // #ifdef USE_GPUS
 
 #include <sfftw.h>
 #include <srfftw.h>
@@ -36,14 +43,16 @@ extern "C" {
 typedef fftw_real sarafft_real;
 typedef fftw_complex sarafft_complex;
 typedef rfftwnd_plan sararfftnd_plan;
-typedef enum {
-  SARAFFT_FORWARD  = FFTW_FORWARD,
-  SARAFFT_BACKWARD = FFTW_BACKWARD
-} sarafft_direction;
-#define SARAFFT_REAL_TO_COMPLEX SARAFFT_FORWARD
-#define SARAFFT_COMPLEX_TO_REAL SARAFFT_BACKWARD
+typedef fftw_direction sarafft_direction;
+#define SARAFFT_REAL_TO_COMPLEX FFTW_FORWARD
+#define SARAFFT_COMPLEX_TO_REAL FFTW_BACKWARD
 
-sararfftnd_plan sararfft3d_create_plan(int nx, int ny, int nz, sarafft_direction dir, int flags);
+#endif // #ifndef USE_GPUS
+
+sararfftnd_plan sararfft3d_create_plan( int nx, int ny, int nz, sarafft_direction dir );
+void sararfftnd_one_real_to_complex( sararfftnd_plan p, sarafft_real    *in, sarafft_complex *out );
+void sararfftnd_one_complex_to_real( sararfftnd_plan p, sarafft_complex *in, sarafft_real    *out );
+void sararfftnd_destroy_plan( sararfftnd_plan plan );
 
 #ifdef __cplusplus
 } // extern "C"

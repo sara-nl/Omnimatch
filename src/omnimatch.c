@@ -176,14 +176,11 @@ int main ( int argc, char *argv[] ) {
   Vx_max = dim_fft;
   Vy_max = dim_fft;
   Vz_max = dim_fft;
-  p3 = sararfft3d_create_plan ( Vx_max, Vy_max, Vz_max, SARAFFT_REAL_TO_COMPLEX,
-                             FFTW_MEASURE | FFTW_IN_PLACE );      /*FFTW_ESTIMATE FFTW_MEASURE */
-  pi3 = sararfft3d_create_plan ( Vx_max, Vy_max, Vz_max, SARAFFT_COMPLEX_TO_REAL,
-                              FFTW_MEASURE | FFTW_IN_PLACE );
-  r3 = sararfft3d_create_plan ( Rx_max, Rx_max, Rx_max, SARAFFT_REAL_TO_COMPLEX,
-                             FFTW_MEASURE | FFTW_IN_PLACE );      /*FFTW_ESTIMATE FFTW_MEASURE */
-  ri3 = sararfft3d_create_plan ( Rx_max, Rx_max, Rx_max, SARAFFT_COMPLEX_TO_REAL,
-                              FFTW_MEASURE | FFTW_IN_PLACE );
+  p3 = sararfft3d_create_plan ( Vx_max, Vy_max, Vz_max, SARAFFT_REAL_TO_COMPLEX );
+  pi3 = sararfft3d_create_plan ( Vx_max, Vy_max, Vz_max, SARAFFT_COMPLEX_TO_REAL );
+  r3 = sararfft3d_create_plan ( Rx_max, Rx_max, Rx_max, SARAFFT_REAL_TO_COMPLEX );
+  ri3 = sararfft3d_create_plan ( Rx_max, Rx_max, Rx_max, SARAFFT_COMPLEX_TO_REAL );
+  // TODO error handling for plan creation.
   if ( myrank == 0 ) {
     printf ( "Plans for FFTW created \n" );fflush ( stdout );
   }
@@ -295,8 +292,8 @@ int main ( int argc, char *argv[] ) {
             }
           }
         }
-        rfftwnd_one_real_to_complex ( p3, &Volume[0], NULL ); /* einmalige fft von Suchvolumen */
-        rfftwnd_one_real_to_complex ( p3, &sqconv[0], NULL ); /* FFT of square*/
+        sararfftnd_one_real_to_complex ( p3, &Volume[0], NULL ); /* einmalige fft von Suchvolumen */
+        sararfftnd_one_real_to_complex ( p3, &sqconv[0], NULL ); /* FFT of square*/
         if ( myrank < mysize - 1 ) {
           winkel_step_pe = ( int ) winkel_max / mysize;
           winkel_min_pe = myrank * winkel_step_pe;
@@ -343,13 +340,13 @@ int main ( int argc, char *argv[] ) {
           pastes ( &Rot_tmpl[0], &Vol_tmpl[0], 1, 1, 1, Rx_max, Ry_max, Rz_max, Vx_max );
           scale = 1.0 / ( ( double ) Vx_max * ( double ) Vy_max * ( double ) Vz_max );
           sort4fftw ( &Vol_tmpl_sort[0], &Vol_tmpl[0], Vx_max, Vy_max, Vz_max );
-          rfftwnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
+          sararfftnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
           PointVolume = ( sarafft_complex * ) & Volume[0];
           C3 = ( sarafft_complex * ) & Vol_tmpl_sort[0];
           /* Correlation */
           correl ( &PointVolume[0], &C3[0], Vx_max, Vy_max, Vz_max, scale );
           /* back to real space */
-          rfftwnd_one_complex_to_real ( pi3, &C3[0], NULL );
+          sararfftnd_one_complex_to_real ( pi3, &C3[0], NULL );
           PointCorr = ( sarafft_real * ) & C3[0];
           /* reorder data */
           sortback4fftw ( &PointCorr[0], &Ergebnis[0], Vx_max, Vy_max, Vz_max );
@@ -360,13 +357,13 @@ int main ( int argc, char *argv[] ) {
           pastes ( &Rot_mask[0], &Vol_tmpl[0], 1, 1, 1, Rx_max, Ry_max, Rz_max, Vx_max );
           /* 1st local mean */
           sort4fftw ( &Vol_tmpl_sort[0], &Vol_tmpl[0], Vx_max, Vy_max, Vz_max );
-          rfftwnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
+          sararfftnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
           C3 = ( sarafft_complex * ) & Vol_tmpl_sort[0];
           /* Convolution of volume and mask */
           scale = 1.0 / ( ( double ) Vx_max * ( double ) Vy_max * ( double ) Vz_max );
           /*convolve( &PointVolume[0], &C3[0], Vx_max, Vy_max, Vz_max, scale);*/
           correl ( &PointVolume[0], &C3[0], Vx_max, Vy_max, Vz_max, scale );
-          rfftwnd_one_complex_to_real ( pi3, &C3[0], NULL );
+          sararfftnd_one_complex_to_real ( pi3, &C3[0], NULL );
           PointCorr = ( sarafft_real * ) & C3[0];
           /* reorder data (FFTW) */
           sortback4fftw ( &PointCorr[0], &conv[0], Vx_max, Vy_max, Vz_max );
@@ -374,12 +371,12 @@ int main ( int argc, char *argv[] ) {
           /* paste mask into zero volume*/
           pastes ( &Rot_mask[0], &Vol_tmpl[0], 1, 1, 1, Rx_max, Ry_max, Rz_max, Vx_max );
           sort4fftw ( &Vol_tmpl_sort[0], &Vol_tmpl[0], Vx_max, Vy_max, Vz_max );
-          rfftwnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
+          sararfftnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
           C3 = ( sarafft_complex * ) & Vol_tmpl_sort[0];
           PointSq = ( sarafft_complex * ) & sqconv[0];// set pointer to FFT of square
           /*convolve( &PointSq[0], &C3[0], Vx_max, Vy_max, Vz_max, scale);*/
           correl ( &PointSq[0], &C3[0], Vx_max, Vy_max, Vz_max, scale );
-          rfftwnd_one_complex_to_real ( pi3, &C3[0], NULL );
+          sararfftnd_one_complex_to_real ( pi3, &C3[0], NULL );
           PointCorr = ( sarafft_real * ) & C3[0];
           lauf = 0;
           for ( k = 0; k < Vz_max; k++ ) {
@@ -465,10 +462,10 @@ int main ( int argc, char *argv[] ) {
   free ( inputdata2.floatdata );
   free ( inputdata3.floatdata );
   free ( inputdata4.floatdata );
-  rfftwnd_destroy_plan ( p3 );
-  rfftwnd_destroy_plan ( pi3 );
-  rfftwnd_destroy_plan ( r3 );
-  rfftwnd_destroy_plan ( ri3 );
+  sararfftnd_destroy_plan ( p3 );
+  sararfftnd_destroy_plan ( pi3 );
+  sararfftnd_destroy_plan ( r3 );
+  sararfftnd_destroy_plan ( ri3 );
   free ( Volume );
   free ( sqconv );
   free ( conv );

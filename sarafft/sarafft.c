@@ -19,7 +19,53 @@
 
 #include "sarafft.h"
 
-sararfftnd_plan sararfft3d_create_plan(int nx, int ny, int nz, sarafft_direction dir, int flags) {
-  return rfftw3d_create_plan(nx, ny, nz, dir, flags);
+sararfftnd_plan sararfft3d_create_plan(
+  int nx, int ny, int nz,
+  sarafft_direction dir
+) {
+#ifdef USE_GPUS
+  sararfftnd_plan plan;
+  cufftResult result = cufftPlan3d( &plan, nx, ny, nz, dir );
+  if( CUFFT_SUCCESS != cufftResult )
+    exit(-1); // TODO better error handling (but to do that, the caller must be rewritten)
+  return plan;
+#else // #ifndef USE_GPUS
+  return rfftw3d_create_plan( nx, ny, nz, dir, FFTW_MEASURE | FFTW_IN_PLACE );
+#endif
 }
 
+
+void sararfftnd_one_real_to_complex(
+  sararfftnd_plan p, sarafft_real *in, sarafft_complex *out
+) {
+#ifdef USE_GPUS
+  // TODO: GPU implementation
+#else // #ifndef USE_GPUS
+  rfftwnd_one_real_to_complex( p, in, out );
+#endif
+}
+
+
+void sararfftnd_one_complex_to_real(
+  sararfftnd_plan p, sarafft_complex *in, sarafft_real *out
+) {
+#ifdef USE_GPUS
+  // TODO: GPU implementation
+#else // #ifndef USE_GPUS
+  rfftwnd_one_complex_to_real( p, in, out );
+#endif
+}
+
+/**
+ * Destroys a previously created plan.
+ * The CUDA destructor returns a result code, while the fftw2 destructor is
+ * a void function. For now, the result code in the CUDA destructor is
+ * ignored.
+ */
+void sararfftnd_destroy_plan( sararfftnd_plan plan ) {
+#ifdef USE_GPUS
+  cufftDestroy( plan );
+#else // #ifndef USE_GPUS
+  rfftwnd_destroy_plan( plan );
+#endif
+}
