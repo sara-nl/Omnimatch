@@ -1,3 +1,4 @@
+!Makefile
 omnimatch.bin
 *.err
 *.out
