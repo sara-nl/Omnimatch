@@ -24,7 +24,6 @@
 #include <time.h>
 #include <tom.h>
 #include <mpi.h>
-#include <sarafft.h>
 
 MPI_Status status;
 MPI_Request request, request1, request2, request3, request4;

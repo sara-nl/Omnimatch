@@ -26,6 +26,7 @@ extern "C" {
 
 #ifdef USE_GPUS
 
+
 #include <cufft.h>
 // TODO: GPU declarations
 typedef cufftReal sarafft_real;
@@ -34,8 +35,12 @@ typedef cufftHandle sararfftnd_plan;
 typedef cufftType sarafft_direction;
 #define SARAFFT_REAL_TO_COMPLEX CUFFT_R2C
 #define SARAFFT_COMPLEX_TO_REAL CUFFT_C2R
+#define c_re(f) ((f).x)
+#define c_im(f) ((f).y)
+
 
 #else // #ifdef USE_GPUS
+
 
 #include <sfftw.h>
 #include <srfftw.h>
@@ -46,6 +51,7 @@ typedef rfftwnd_plan sararfftnd_plan;
 typedef fftw_direction sarafft_direction;
 #define SARAFFT_REAL_TO_COMPLEX FFTW_FORWARD
 #define SARAFFT_COMPLEX_TO_REAL FFTW_BACKWARD
+
 
 #endif // #ifndef USE_GPUS
 

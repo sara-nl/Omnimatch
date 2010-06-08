@@ -17,6 +17,7 @@
  * along with Omnimatch.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
+//#define USE_GPUS
 #include <sarafft.h>
 
 // tom_rotate3d.c  by S.N.
