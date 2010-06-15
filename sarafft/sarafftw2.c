@@ -30,7 +30,7 @@ sararfftnd_plan sararfft3d_create_plan(
   sararfftnd_plan plan;
   cufftResult result = cufftPlan3d( &plan, nx, ny, nz, dir );
   if( CUFFT_SUCCESS != result )
-    exit(-1); // TODO better error handling (but to do that, the caller must be rewritten)
+    exit(64); // TODO better error handling (but to do that, the caller must be rewritten)
   return plan;
 #else // #ifndef USE_GPUS
   return rfftw3d_create_plan( nx, ny, nz, dir, FFTW_MEASURE | FFTW_IN_PLACE );

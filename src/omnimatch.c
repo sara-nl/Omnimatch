@@ -161,7 +161,7 @@ int main ( int argc, char *argv[] ) {
     if ( myrank == 0 )
       printf ( "dimfft greater than one of the dimensions! Choose smaller and restart! \n" );
     MPI_Finalize();
-    exit ( 1 );
+    exit ( 2 );
   }
 
   Rx_min = 1;
@@ -196,7 +196,7 @@ int main ( int argc, char *argv[] ) {
     printf ( "Memory allocation  failure in inputdata1.floatdata!!!" );
     fflush ( stdout );
     MPI_Finalize();
-    exit ( 1 );
+    exit ( 3 );
   }
   if ( !
        ( outputdata.floatdata =
@@ -204,7 +204,7 @@ int main ( int argc, char *argv[] ) {
     printf ( "Memory allocation  failure in outputdata.floatdata!!!" );
     fflush ( stdout );
     MPI_Finalize();
-    exit ( 1 );
+    exit ( 4 );
   }
 
   if ( !
@@ -213,7 +213,7 @@ int main ( int argc, char *argv[] ) {
     printf ( "Nx = %i, Ny = %i, Nz = %i, bytes = %li \n", 2 * ( Vx_max / 2 + 1 ), Vy_max, Vz_max, sizeof ( sarafft_real ) );
     fflush ( stdout );
     MPI_Finalize();
-    exit ( 1 );
+    exit ( 5 );
   }
   Ergebnis = ( float * ) calloc ( Vz_max * Vy_max * Vx_max, sizeof ( float ) );
   /* Winkelraum */

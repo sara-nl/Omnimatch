@@ -3,9 +3,10 @@ CONFIG += staticlib $$[fft]
 CONFIG -= qt
 TARGET = sarafft
 cufft {
-    INCLUDEPATH += ../omnicuda
-    DEFINES += USE_GPUS
+  DEFINES += USE_GPUS
+  SOURCES += saracufft.cpp
 }
-SOURCES += sarafft.c
+fftw2 {
+  SOURCES += sarafftw2.c
+}
 HEADERS += sarafft.h
-DEPENDPATH += $$INCLUDEPATH

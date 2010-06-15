@@ -64,7 +64,7 @@ void read_em ( char *infile, struct em_file *inemdata ) {
 //  int lauf;
   if ( ( input = fopen ( infile, "r" ) ) == 0 ) {
     printf( "could not open %s\n", infile );
-    exit ( 1 );
+    exit ( 16 );
   }
 
 
@@ -80,15 +80,15 @@ void read_em ( char *infile, struct em_file *inemdata ) {
 
   switch ( inemdata->type[0] ) {
   case 1: if ( ( inemdata->bytedata = ( unsigned char * )( malloc( size ) ) ) == 0 )
-      { printf ( "could not allocate memory" ); exit ( 1 ); }
+      { printf ( "could not allocate memory" ); exit ( 17 ); }
     break;
   case 2: if ( ( inemdata->intdata = ( int * )( malloc( size * 2 ) ) ) == 0 )
-      { printf ( "could not allocate memory" ); exit ( 1 ); }
+      { printf ( "could not allocate memory" ); exit ( 18 ); }
     if ( ( inemdata->floatdata = ( float * )( malloc( size * 4 ) ) ) == 0 )
-      { printf ( "could not allocate memory" ); exit ( 1 );}
+      { printf ( "could not allocate memory" ); exit ( 19 );}
     break;
   case 5: if ( ( inemdata->floatdata = ( float * )( malloc( size * 4 ) ) ) == 0 )
-      { printf ( "could not allocate memory" ); exit ( 1 ); }
+      { printf ( "could not allocate memory" ); exit ( 20 ); }
     break;
   }
 
@@ -108,7 +108,7 @@ void read_em_header ( char *infile, struct em_file *inemdata ) {
 //  int lauf;
   if ( ( input = fopen ( infile, "r" ) ) == 0 ) {
     printf( "could not open %s\n in readm_em_header", infile );
-    exit ( 1 );
+    exit ( 21 );
   }
 
   fread ( inemdata->magic, 1, 1, input );
@@ -137,7 +137,7 @@ void read_em_subregion ( char *infile, struct em_file *inemdata, int *nr, int  *
 
   if ( ( input = fopen ( infile, "r" ) ) == 0 ) {
     printf( "could not open %s\n", infile );
-    exit ( 1 );
+    exit ( 22 );
   }
 
   fread ( inemdata->magic, 1, 1, input );
@@ -205,7 +205,7 @@ void write_em ( char *outfile, struct em_file *outemdata ) {
 
   if ( ( output = fopen ( outfile, "w" ) ) == 0 ) {
     printf( "could not open %s\n", outfile );
-    exit ( 1 );
+    exit ( 23 );
   }
 
 
@@ -241,7 +241,7 @@ void write_em_subregion ( char *outfile, struct em_file *outemdata, int *nr, int
   int count;
 
   if ( ( output = fopen ( outfile, "r+b" ) ) == 0 ) {
-    printf( "Could not open file for reading in write_em_subregion.\n" ); exit( 1 );
+    printf( "Could not open file for reading in write_em_subregion.\n" ); exit( 24 );
   }
   fread ( outemdata->magic, 1, 1, output );
   fread ( outemdata->dummya, 1, 2, output );
@@ -302,7 +302,7 @@ void write_em_subsubregion ( char *outfile, struct em_file *outemdata, int *nr, 
   */
 
   if ( ( output = fopen ( outfile, "r+b" ) ) == 0 ) {
-    printf( "Could not open file for reading in write_em_subsubregion.\n" );  exit( 1 );
+    printf( "Could not open file for reading in write_em_subsubregion.\n" );  exit( 25 );
   }
   fread ( outemdata->magic, 1, 1, output );
   fread ( outemdata->dummya, 1, 2, output );
@@ -366,7 +366,7 @@ void create_em ( char *outfile, int *nr ) {
   int lauf;
 
   if ( ( output = fopen ( outfile, "wb" ) ) == 0 ) {
-    printf( "Could not create file in create_em.\n" ); exit( 1 );
+    printf( "Could not create file in create_em.\n" ); exit( 26 );
   }
   magic[0] = 6; /* for PC */
   fwrite ( magic, 1, 1, output );
@@ -386,7 +386,7 @@ void create_em ( char *outfile, int *nr ) {
   for ( lauf = 0;lauf < 256;lauf++ ){dummyb[lauf] = 0.0;}
   fwrite ( dummyb, 1, 256, output );
   if ( ( floatdata = ( float * )( malloc( dims[1] * dims[0] * sizeof( float ) ) ) ) == 0 )
-    {printf( "Memory allocation problem in tom_emwritec.\n" );exit( 1 );}
+    {printf( "Memory allocation problem in tom_emwritec.\n" );exit( 27 );}
   for ( lauf = 0;lauf < dims[1]*dims[0];lauf++ ){floatdata[lauf] = 0.0;};
   for ( lauf = 0;lauf < dims[2];lauf++ ){fwrite( &floatdata[0], sizeof( float ), dims[0]*dims[1], output );};
   fflush( output );

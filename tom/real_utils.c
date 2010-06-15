@@ -32,19 +32,19 @@ void symref( float *volume, int nfold, int Nx, int Ny, int Nz ) {
   /* check nfold */
   if ( nfold < 2 ) {
     printf( " Stop in symref - nfold = %i \n", nfold );fflush ( stdout );
-    exit ( 1 );
+    exit ( 48 );
   }
   /* allocate memory for tmpvol */
   if ( ! ( tmpvol = ( float * ) malloc ( sizeof ( float ) * Nx * Ny * Nz ) ) ) {
     printf ( " Exit in symref ... \n" );
     printf ( " Memory allocation  failure in tmpvol !!!\n" );fflush ( stdout );
-    exit ( 1 );
+    exit ( 49 );
   }
   tmpvol2 = ( float * ) malloc ( sizeof ( float ) * Nx * Ny * Nz );
   if ( ! ( symvol = ( float * ) malloc ( sizeof ( float ) * Nx * Ny * Nz ) ) ) {
     printf ( " Exit in symref ... \n" );
     printf ( " Memory allocation  failure in symvol !!!\n" );fflush ( stdout );
-    exit ( 1 );
+    exit ( 50 );
   }
   irun = 0;
   for ( iz = 0; iz < Nz; iz++ ) {
