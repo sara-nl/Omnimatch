@@ -1,0 +1,22 @@
+# This is a job requesting 24 cores
+#
+#PBS -lnodes=1:ppn=4
+#PBS -q q_gpu
+#PBS -lwalltime=2:00:00
+
+cd $HOME/omnimatch/bin
+
+. ../setenv.sh
+
+# start your program
+cat $PBS_NODESFILE
+time mpiexec \
+	./omnimatch \
+	../data/testvol.em \
+	../data/templ.em \
+	testvol4-sp \
+	0 180 20 0 180 20 0 180 20 \
+	../data/psf.em \
+	../data/mask_15.em \
+	128 \
+	>testvol4-sp.out 2>testvol4-sp.err

@@ -18,6 +18,9 @@
  **************************************************************************/
 
 #include "sarafft.h"
+#include <omnicuda.h>
+#include <stdlib.h> // exit
+
 
 sararfftnd_plan sararfft3d_create_plan(
   int nx, int ny, int nz,
@@ -26,7 +29,7 @@ sararfftnd_plan sararfft3d_create_plan(
 #ifdef USE_GPUS
   sararfftnd_plan plan;
   cufftResult result = cufftPlan3d( &plan, nx, ny, nz, dir );
-  if( CUFFT_SUCCESS != cufftResult )
+  if( CUFFT_SUCCESS != result )
     exit(-1); // TODO better error handling (but to do that, the caller must be rewritten)
   return plan;
 #else // #ifndef USE_GPUS
@@ -36,23 +39,23 @@ sararfftnd_plan sararfft3d_create_plan(
 
 
 void sararfftnd_one_real_to_complex(
-  sararfftnd_plan p, sarafft_real *in, sarafft_complex *out
+  sararfftnd_plan p, sarafft_real *data
 ) {
 #ifdef USE_GPUS
   // TODO: GPU implementation
 #else // #ifndef USE_GPUS
-  rfftwnd_one_real_to_complex( p, in, out );
+  rfftwnd_one_real_to_complex( p, data, 0 );
 #endif
 }
 
 
 void sararfftnd_one_complex_to_real(
-  sararfftnd_plan p, sarafft_complex *in, sarafft_real *out
+  sararfftnd_plan p, sarafft_complex *data
 ) {
 #ifdef USE_GPUS
   // TODO: GPU implementation
 #else // #ifndef USE_GPUS
-  rfftwnd_one_complex_to_real( p, in, out );
+  rfftwnd_one_complex_to_real( p, data, 0 );
 #endif
 }
 
@@ -69,3 +72,5 @@ void sararfftnd_destroy_plan( sararfftnd_plan plan ) {
   rfftwnd_destroy_plan( plan );
 #endif
 }
+
+void sarafft_init() {}

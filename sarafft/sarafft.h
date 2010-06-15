@@ -52,13 +52,13 @@ typedef fftw_direction sarafft_direction;
 #define SARAFFT_REAL_TO_COMPLEX FFTW_FORWARD
 #define SARAFFT_COMPLEX_TO_REAL FFTW_BACKWARD
 
+void sarafft_init();
+sararfftnd_plan sararfft3d_create_plan( int nx, int ny, int nz, sarafft_direction dir );
+void sararfftnd_one_real_to_complex( sararfftnd_plan p, sarafft_real    *data );
+void sararfftnd_one_complex_to_real( sararfftnd_plan p, sarafft_complex *data );
+void sararfftnd_destroy_plan( sararfftnd_plan plan );
 
 #endif // #ifndef USE_GPUS
-
-sararfftnd_plan sararfft3d_create_plan( int nx, int ny, int nz, sarafft_direction dir );
-void sararfftnd_one_real_to_complex( sararfftnd_plan p, sarafft_real    *in, sarafft_complex *out );
-void sararfftnd_one_complex_to_real( sararfftnd_plan p, sarafft_complex *in, sarafft_real    *out );
-void sararfftnd_destroy_plan( sararfftnd_plan plan );
 
 #ifdef __cplusplus
 } // extern "C"

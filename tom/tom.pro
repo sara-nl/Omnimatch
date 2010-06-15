@@ -18,4 +18,4 @@ SOURCES += cross.c \
 TARGETDEPS += ../sarafft/libsarafft.a
 
 INCLUDEPATH += ../sarafft
-
+DEPENDPATH += $$INCLUDEPATH

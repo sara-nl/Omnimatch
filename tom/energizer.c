@@ -126,9 +126,9 @@ float energizer
       }
     }
   }
-  sararfftnd_one_real_to_complex ( r3, &Rot_tmpl_ft[0], NULL );
+  sararfftnd_one_real_to_complex ( r3, &Rot_tmpl_ft[0] );
 
-  sararfftnd_one_real_to_complex ( r3, &wedge[0], NULL );
+  sararfftnd_one_real_to_complex ( r3, &wedge[0] );
   W3 = ( sarafft_complex * ) & wedge[0];
   R3 = ( sarafft_complex * ) & Rot_tmpl_ft[0];
   scale = 1.0 / ( Rx_max * Rx_max * Rx_max );
@@ -148,7 +148,7 @@ float energizer
       }
     }
   }
-  sararfftnd_one_complex_to_real ( ri3, &R3[0], NULL );
+  sararfftnd_one_complex_to_real ( ri3, &R3[0] );
 
   Rreal = ( sarafft_real * ) & R3[0];
   lauf = 0;
@@ -216,8 +216,8 @@ float prepref( int Rx_min, // unused?
       }
     }
   }
-  sararfftnd_one_real_to_complex ( r3, &Rot_tmpl_ft[0], NULL );
-  sararfftnd_one_real_to_complex ( r3, &wedge[0], NULL );
+  sararfftnd_one_real_to_complex ( r3, &Rot_tmpl_ft[0] );
+  sararfftnd_one_real_to_complex ( r3, &wedge[0] );
   W3 = ( sarafft_complex * ) & wedge[0];
   R3 = ( sarafft_complex * ) & Rot_tmpl_ft[0];
   scale = 1.0 / ( Rx_max * Rx_max * Rx_max );
@@ -236,7 +236,7 @@ float prepref( int Rx_min, // unused?
       }
     }
   }
-  sararfftnd_one_complex_to_real ( ri3, &R3[0], NULL );
+  sararfftnd_one_complex_to_real ( ri3, &R3[0] );
   Rreal = ( sarafft_real * ) & R3[0];
   lauf = 0;
   SQSUM = 0;

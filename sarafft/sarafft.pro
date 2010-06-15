@@ -1,8 +1,11 @@
 TEMPLATE = lib
-CONFIG += staticlib
+CONFIG += staticlib $$[fft]
 CONFIG -= qt
 TARGET = sarafft
-INCLUDEPATH += ../omnicuda
+cufft {
+    INCLUDEPATH += ../omnicuda
+    DEFINES += USE_GPUS
+}
 SOURCES += sarafft.c
 HEADERS += sarafft.h
-
+DEPENDPATH += $$INCLUDEPATH
