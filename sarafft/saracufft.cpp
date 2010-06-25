@@ -17,9 +17,10 @@
  * along with SARAFFT.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-#include "omnicuda.h"
+#include "sarafft.h"
 #include <stdlib.h>
 #include <cuda.h>
+#include <cuda_runtime_api.h>
 
 struct PlanList {
   struct PlanList *next;
@@ -31,30 +32,36 @@ static struct PlanList *planList = NULL;
 
 static CUcontext cuda_context;
 
-void sarafft_init() {
-  char *OMPI_COMM_WORLD_LOCAL_RANK = getenv("OMPI_COMM_WORLD_LOCAL_RANK");
-  if (NULL == OMPI_COMM_WORLD_LOCAL_RANK) {
+extern "C" void sarafft_init() {
+  printf( "Cuda is about to be initialized!\n" );
+  fflush ( stdout );
+  char *OMPI_COMM_WORLD_LOCAL_RANK = getenv( "OMPI_COMM_WORLD_LOCAL_RANK" );
+  if ( NULL == OMPI_COMM_WORLD_LOCAL_RANK ) {
     printf( "OMPI_COMM_WORLD_LOCAL_RANK not set!\n" );
     fflush ( stdout );
-    exit( -1 );
+    exit( 80 );
   }
-  int localRank = atoi(OMPI_COMM_WORLD_LOCAL_RANK);
+  int localRank = atoi( OMPI_COMM_WORLD_LOCAL_RANK );
+  printf( "Local rank is %d\n", localRank );
+  fflush ( stdout );
   if ( CUDA_SUCCESS != cuInit( 0 ) ) {
     printf( "cuInit failed!\n" );
     fflush ( stdout );
-    exit( -1 );
+    exit( 81 );
   }
   CUdevice device;
   if ( CUDA_SUCCESS != cuDeviceGet( &device, localRank ) ) {
     printf( "cuDeviceGet failed!\n" );
     fflush ( stdout );
-    exit( -1 );
+    exit( 82 );
   }
   if ( CUDA_SUCCESS != cuCtxCreate( &cuda_context, CU_CTX_SCHED_YIELD, device ) ) {
     printf( "cuCtxCreate failed!\n" );
     fflush ( stdout );
-    exit( -1 );
+    exit( 83 );
   }
+  printf( "Cuda was initialized successfully!\n" );
+  fflush ( stdout );
 }
 
 
@@ -96,13 +103,17 @@ sararfftnd_plan sararfft3d_create_plan(
   int nx, int ny, int nz, sarafft_direction dir
 ) {
   sararfftnd_plan plan;
+  printf( "cufftPlan3d() about to start!\n" );
+  fflush ( stdout );
   cufftResult result = cufftPlan3d( &plan, nx, ny, nz, dir );
   if ( CUFFT_SUCCESS != result ) {
-    printf( "cufftPlan3d() failed!\n" );
+    printf( "cufftPlan3d() failed with code %d for dir=%d\n", result, dir );
     fflush ( stdout );
-    exit( -1 ); // TODO better error handling (but to do that, the caller must be rewritten)
+    exit( 84 ); // TODO better error handling (but to do that, the caller must be rewritten)
   }
-  setPlanSize ( plan, sizeof( sarafft_real ) * nx * ny * nz );
+  printf( "cufftPlan3d() succeeded!\n" );
+  fflush ( stdout );
+  setPlanSize ( plan, sizeof( sarafft_real ) * nx * ny * ( nz + 1 ) );
   return plan;
 }
 
@@ -120,30 +131,44 @@ void sararfftnd_one_real_to_complex(
 ) {
   CUdeviceptr d_data;
   size_t planSize = getPlanSize( plan );
+//   printf( "planSize = %li!\n", planSize );
+//   fflush ( stdout );
+  cufftResult fftResult;
+  CUresult cudaResult;
   if ( CUDA_SUCCESS != cuMemAlloc( &d_data, planSize ) ) {
     printf( "cuMemAlloc failed for plansize %li!\n", planSize );
     fflush ( stdout );
-    exit( -1 );
+    exit( 85 );
   }
   if ( CUDA_SUCCESS != cuMemcpyHtoD( d_data, h_data, planSize ) ) {
     printf( "cuMemcpyHtoD failed!\n" );
     fflush ( stdout );
-    exit( -1 );
+    exit( 86 );
   }
-  if ( CUFFT_SUCCESS != cufftExecR2C( plan, ( cufftReal* )d_data, ( cufftComplex* )d_data ) ) {
-    printf( "cufftExecR2C failed!\n" );
+//   cudaError_t cudaError = cudaGetLastError();
+//   if( cudaError != cudaSuccess ) {
+//     printf( "CUDA Runtime API Error reported : %s\n", cudaGetErrorString(cudaError));
+//     fflush ( stdout );
+//     exit( 87 );
+//   } else {
+//     printf( "CUDA is in good shape.\n");
+//     fflush ( stdout );
+//   }
+  fftResult = cufftExecR2C( plan, ( cufftReal* )d_data, ( cufftComplex* )d_data );
+  if ( CUFFT_SUCCESS != fftResult ) {
+    printf( "cufftExecR2C failed with code %d\n", fftResult );
     fflush ( stdout );
-    exit( -1 );
+    exit( 87 );
   }
   if ( CUDA_SUCCESS != cuMemcpyDtoH( h_data, d_data, planSize ) ) {
     printf( "cuMemcpyDtoH failed!\n" );
     fflush ( stdout );
-    exit( -1 );
+    exit( 88 );
   }
   if ( CUDA_SUCCESS != cuMemFree( d_data ) ) {
     printf( "cuMemFree failed!\n" );
     fflush ( stdout );
-    exit( -1 );
+    exit( 89 );
   }
 }
 
@@ -156,27 +181,27 @@ void sararfftnd_one_complex_to_real(
   if ( CUDA_SUCCESS != cuMemAlloc( &d_data, planSize ) ) {
     printf( "cuMemAlloc failed for plansize %li!\n", planSize );
     fflush ( stdout );
-    exit( -1 );
+    exit( 90 );
   }
   if ( CUDA_SUCCESS != cuMemcpyHtoD( d_data, h_data, planSize ) ) {
     printf( "cuMemcpyHtoD failed!\n" );
     fflush ( stdout );
-    exit( -1 );
+    exit( 91 );
   }
   if ( CUFFT_SUCCESS != cufftExecC2R( plan, ( cufftComplex* )d_data, ( cufftReal* )d_data ) ) {
     printf( "cufftExecR2C failed!\n" );
     fflush ( stdout );
-    exit( -1 );
+    exit( 92 );
   }
   if ( CUDA_SUCCESS != cuMemcpyDtoH( h_data, d_data, planSize ) ) {
     printf( "cuMemcpyDtoH failed!\n" );
     fflush ( stdout );
-    exit( -1 );
+    exit( 93 );
   }
   if ( CUDA_SUCCESS != cuMemFree( d_data ) ) {
     printf( "cuMemFree failed!\n" );
     fflush ( stdout );
-    exit( -1 );
+    exit( 94 );
   }
 }
 

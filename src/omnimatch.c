@@ -176,6 +176,9 @@ int main ( int argc, char *argv[] ) {
   Vx_max = dim_fft;
   Vy_max = dim_fft;
   Vz_max = dim_fft;
+  
+    printf( "cufftPlan3d() about to start!\n" );
+    fflush ( stdout );
   p3 = sararfft3d_create_plan ( Vx_max, Vy_max, Vz_max, SARAFFT_REAL_TO_COMPLEX );
   pi3 = sararfft3d_create_plan ( Vx_max, Vy_max, Vz_max, SARAFFT_COMPLEX_TO_REAL );
   r3 = sararfft3d_create_plan ( Rx_max, Rx_max, Rx_max, SARAFFT_REAL_TO_COMPLEX );

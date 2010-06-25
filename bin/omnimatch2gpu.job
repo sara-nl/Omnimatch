@@ -1,8 +1,8 @@
 # This is a job requesting 24 cores
 #
-#PBS -lnodes=1:ppn=4
+#PBS -lnodes=1:ppn=2
 #PBS -q q_gpu
-#PBS -lwalltime=2:00:00
+#PBS -lwalltime=1:00:00
 
 cd $HOME/omnimatch/bin
 
@@ -19,5 +19,8 @@ time mpiexec \
 	0 180 20 0 180 20 0 180 20 \
 	../data/psf.em \
 	../data/mask_15.em \
-	128 \
-	>testvol4-sp.out 2>testvol4-sp.err
+	128
+echo "MPI's exit status was $?"
+
+#	>testvol4-sp.out 2>testvol4-sp.err
+#	--output-filename mpioutput \

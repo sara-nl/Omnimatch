@@ -10,9 +10,15 @@ SOURCES = omnimatch.c
 QMAKE_LINK = gcc
 INCLUDEPATH += ../tom ../sarafft
 DEPENDPATH += $$INCLUDEPATH
-LIBS += ../sarafft/libsarafft.a ../tom/libtom.a -lmpi
 cufft {
-  LIBS += ../omnicuda/libomnicuda.a -lcufft -lcuda
+    DEFINES += USE_GPUS
+    LIBS += -lcufft -lcuda
 } else:fftw2 {
-  LIBS += -lsrfftw -lsfftw
+    LIBS += -lsrfftw -lsfftw
 } else:error("Don't know which fft implementation to use!")
+LIBS += ../tom/libtom.a \
+  ../sarafft/libsarafft.a \
+  -lmpi
+
+TARGETDEPS += ../tom/libtom.a \
+  ../sarafft/libsarafft.a
