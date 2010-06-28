@@ -113,7 +113,7 @@ sararfftnd_plan sararfft3d_create_plan(
   }
   printf( "cufftPlan3d() succeeded!\n" );
   fflush ( stdout );
-  setPlanSize ( plan, sizeof( sarafft_real ) * nx * ny * ( nz + 1 ) );
+  setPlanSize ( plan, sizeof( sarafft_real ) * nx * ny * ( nz + 2 ) );
   return plan;
 }
 
