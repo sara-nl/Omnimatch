@@ -22,120 +22,259 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#include <tom.h>
-#include <zeit.h>
+#include "tom.h"
+#include "zeit.h" 
+#include "data.h"
 #include <mpi.h>
 
+#define TAG 99
+
+void show_usage() {
+  printf ( "\n\n" );
+  printf ( " 'OMNIMATCH' computes a matched filter of tomograms \n" );
+  printf ( " and templates of arbitrary geometry.\n" );
+  printf ( " In detail, a locally normalized constrained cross-correlation\n" );
+  printf ( " is computed (further development of CCF defined in \n" );
+  printf ( "   Frangakis et al PNAS 2002. \n" );
+  printf ( " ######################################################\n" );
+  printf ( " All files in EM-V-int4 format !!!\n\n" );
+  printf ( "PARAMETERS\n" );
+  printf ( "Input: \n" );
+  printf ( " no_cpus      number of CPUs to be used for MPI processing \n" );
+  printf ( " Volume       Tomogram to be searched\n" );
+  printf ( " Template     template of object - smaller dimension...\n" );
+  printf ( " mask         (spherical) mask for local correlation - same dim as template\n" );
+  printf ( " psf          pointspread function - same dim as template\n" );
+  printf ( " angles       Euler angles that determine angular range:  \n" );
+  printf ( "              Phi_min Phi_max Phi_step Psi_min Psi_max Psi_step The_min The_max The_step\n" );
+  printf ( " dimfft       dimension of FFT - tomogram is divided into cubes of dimfft\n" );
+  printf ( "              dimfft must be <= (smaller or equal to) the smallest dimension! \n\n" );
+  printf ( "Output:\n" );
+  printf ( " Out.ccf      non-normalized X-Correlation Function\n" );
+  printf ( " Out.ccf.norm locally normalized X-Correlation Function\n" );
+  printf ( " Out.ang      File containing the corresponding angles. The index of the correlated angle\n" );
+  printf ( "              is stored -> keep your angular parameters to reconstruct the angles!\n" );
+  printf ( "              loop order: inner=phi, outer: theta\n\n" );
+  printf ( " ######################################################\n" );
+  printf ( " usage: omnimatch.exe Volume Template Out ...\n" );
+  printf ( "         ... Phi_min Phi_max Phi_step Psi_min Psi_max Psi_step The_min The_max The_step\n" );
+  printf ( "    ... psf mask-file dim_of_fft\n\n" );
+  printf ( " the total number of angles should be modulo\n" );
+  printf ( " of used processors for highest computational efficiency \n\n" );
+  printf ( " Linux:  1.'lamboot' to start MPI\n" );
+  printf ( "              2.'mpirun -np 2 omnimatch.exe Volume Templ Out 30 180 30 30 180 30 30 180 30 Poinspread-function mask-file 256'\n\n" );
+  printf ( " ######################################################\n" );
+  printf ( "   Attention: \n" );
+  printf ( "    Nomenclature of Euler angles is according to the EM program\n" );
+  printf ( "    In most other programs (SPIDER, EMAN) Phi and Psi are \n" );
+  printf ( "    exchanged compared to the EM convention. \n" );
+  printf ( " ######################################################\n" );
+  printf ( " In this version asymmetric masks can be used ! \n" );
+  printf ( " last revision  ,  04/01/05, Friedrich Foerster\n" );
+  printf ( "   - released modulu requirement " );
+  printf ( " \n\n" );
+  exit ( 1 );
+}
 
 MPI_Status status;
 MPI_Request request, request1, request2, request3, request4;
+int myrank, mysize, tag = TAG;
 
-int myrank, mysize, tag = 99;
+struct gen_data inputdata1;
+struct gen_data inputdata2;
+struct gen_data inputdata3;
+struct gen_data inputdata4;
+struct gen_data outputdata;
+
+fftw_real *Vol_tmpl_sort, *Volume, *PointCorr, *sqconv;
+fftw_complex *C3, *PointVolume, *PointSq;
+
+rfftwnd_plan p3, pi3, r3, ri3;
+int Rx_max, Ry_max, Rz_max;
+int Rx_min, Ry_min, Rz_min;
+int Vx_min, Vy_min, Vz_min;
+int Vx_max, Vy_max, Vz_max;
+int FullVolume_dims[3];
+
+float *Rot_tmpl, *Vol_tmpl, *Rot_mask;
+float *Ergebnis, *conv;
+
+char name[200];
+
+int winkel_max, winkel_min;
+int winkel_max_pe, winkel_min_pe;
+int winkel_step_pe;
+
+FILE *wisdom_file;
+
+void create_fft_plans() {
+  wisdom_file = fopen("plans.wisdom", "r");
+  if (FFTW_FAILURE == fftw_import_wisdom_from_file(wisdom_file))
+    printf("Error reading wisdom!\n");
+  fclose(wisdom_file); /* be sure to close the file! */
+
+  p3 = rfftw3d_create_plan ( Vx_max, Vy_max, Vz_max, FFTW_REAL_TO_COMPLEX, FFTW_MEASURE | FFTW_IN_PLACE | FFTW_USE_WISDOM );
+  pi3 = rfftw3d_create_plan ( Vx_max, Vy_max, Vz_max, FFTW_COMPLEX_TO_REAL, FFTW_MEASURE | FFTW_IN_PLACE | FFTW_USE_WISDOM );
+  r3 = rfftw3d_create_plan ( Rx_max, Rx_max, Rx_max, FFTW_REAL_TO_COMPLEX, FFTW_MEASURE | FFTW_IN_PLACE | FFTW_USE_WISDOM );
+  ri3 = rfftw3d_create_plan ( Rx_max, Rx_max, Rx_max, FFTW_COMPLEX_TO_REAL, FFTW_MEASURE | FFTW_IN_PLACE | FFTW_USE_WISDOM );
+}
+
+void destroy_fft_plans() {
+  rfftwnd_destroy_plan ( p3 );
+  rfftwnd_destroy_plan ( pi3 );
+  rfftwnd_destroy_plan ( r3 );
+  rfftwnd_destroy_plan ( ri3 );
+}
+
+
+void allocate_memory() {
+  Volume = ( fftw_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( fftw_real ) );
+  Rot_tmpl = ( float * ) malloc ( sizeof ( float ) * Rx_max * Ry_max * Rz_max );
+  Rot_mask = ( float * ) malloc ( sizeof ( float ) * Rx_max * Ry_max * Rz_max );
+  Vol_tmpl = ( float * ) malloc ( sizeof ( float ) * Vx_max * Vy_max * Vz_max );
+  conv = ( float * ) malloc ( sizeof ( float ) * Vx_max * Vy_max * Vz_max );
+  sqconv = ( fftw_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( fftw_real ) );
+  
+if ( !( inputdata1.fdata = ( float * ) malloc ( sizeof ( float ) * Vx_max * Vy_max * Vz_max ) ) ) {
+    printf ( "Memory allocation  failure in inputdata1.floatdata!!!" );
+    fflush ( stdout );
+    MPI_Finalize();
+    exit ( 1 );
+  }
+  if ( !( outputdata.fdata = ( float * ) malloc ( sizeof ( float ) * Vx_max * Vy_max * Vz_max ) ) ) {
+    printf ( "Memory allocation  failure in outputdata.floatdata!!!" );
+    fflush ( stdout );
+    MPI_Finalize();
+    exit ( 1 );
+  }
+
+  if ( !( Vol_tmpl_sort = ( fftw_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( fftw_real ) ) ) ) {
+    printf ( "Memory allocation  failure in Volume_tmpl_sort!!!" );
+    printf ( "Nx = %i, Ny = %i, Nz = %i, bytes = %li \n", 2 * ( Vx_max / 2 + 1 ), Vy_max, Vz_max, sizeof ( fftw_real ) );
+    fflush ( stdout );
+    MPI_Finalize();
+    exit ( 1 );
+  }
+
+  Ergebnis = ( float * ) calloc ( Vz_max * Vy_max * Vx_max, sizeof ( float ) );
+}
+
+void free_memory() {
+  free ( Ergebnis );
+  free ( inputdata1.fdata );
+  free ( inputdata2.fdata );
+  free ( inputdata3.fdata );
+  free ( inputdata4.fdata );
+  free ( Volume );
+  free ( sqconv );
+  free ( conv );
+  free ( Rot_tmpl );
+  free ( Rot_mask );
+  free ( Vol_tmpl_sort );
+  free ( outputdata.fdata );
+}
+
+void create_output_files(const char* output_prefix) {
+  strcpy ( name, output_prefix );
+  strcat ( name, ".ccf" );
+  printf ( "\nCreate outputfile: %s ... \n", name );fflush ( stdout );
+  create_output ( name, FullVolume_dims );
+  strcpy ( name, output_prefix );
+  strcat ( name, ".ang" );
+  printf ( "Create outputfile: %s ... \n", name );fflush ( stdout );
+  create_output ( name, FullVolume_dims );
+}
+
+void distribute_workload() {
+  if ( myrank < mysize - 1 ) {
+    winkel_step_pe = ( int ) winkel_max / mysize;
+    winkel_min_pe = myrank * winkel_step_pe;
+  } else {
+    winkel_step_pe = ( int ) winkel_max / mysize + winkel_max - ( ( int ) winkel_max / mysize ) * mysize; /* last processor needs to do more */
+    winkel_min_pe = myrank * ( ( int ) winkel_max / mysize );
+  }
+ 
+  if ( myrank < mysize )
+    winkel_max_pe = winkel_min_pe + winkel_step_pe;
+  else
+    winkel_max_pe = winkel_max;/* last processor */
+}
+
+void sort_data() {
+  int i, j, k;
+  int counter = 0;
+  for ( k = 0; k < Vz_max; k++ ) {
+    for ( j = 0; j < Vy_max; j++ ) {
+      for ( i = 0; i < Vx_max; i++ ) {
+	/* square - needed for normalization */
+	sqconv[i + 2 * ( Vx_max / 2 + 1 ) * ( j + Vy_max * k ) ] = inputdata1.fdata[counter] * inputdata1.fdata[counter];
+	Volume[i + 2 * ( Vx_max / 2 + 1 ) * ( j + Vy_max * k ) ] = inputdata1.fdata[counter];
+	inputdata1.fdata[counter] = -1.0; /* small number wg Max-Op, here come in the CCFs */
+	outputdata.fdata[counter] = -1.0; /* here come in the angles */
+	counter++;
+      }
+    }
+  }
+}
+
+void do_correlation( float * tofft, fftw_complex * ffted, float * result) {
+  fftw_real scale = 1.0 / ( ( double ) Vx_max * ( double ) Vy_max * ( double ) Vz_max ); 
+  /* paste mask into zero volume*/
+  pastes ( tofft, &Vol_tmpl[0], 1, 1, 1, Rx_max, Ry_max, Rz_max, Vx_max );
+  sort4fftw ( &Vol_tmpl_sort[0], &Vol_tmpl[0], Vx_max, Vy_max, Vz_max );
+  rfftwnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
+  C3 = ( fftw_complex * ) & Vol_tmpl_sort[0];
+  /* Correlation */
+  correl ( ffted, &C3[0], Vx_max, Vy_max, Vz_max, scale );
+  /* back to real space */
+  rfftwnd_one_complex_to_real ( pi3, &C3[0], NULL );
+  PointCorr = ( fftw_real * ) & C3[0];
+  /* reorder data */
+  if (result)
+    sortback4fftw ( &PointCorr[0], result, Vx_max, Vy_max, Vz_max );
+}
 
 int main ( int argc, char *argv[] ) {
-  struct em_file inputdata1;
-  struct em_file inputdata2;
-  struct em_file inputdata3;
-  struct em_file inputdata4;
-  struct em_file outputdata;
-
-  fftw_real *Vol_tmpl_sort, *Volume, *e3 __attribute__ ( ( unused ) ), *PointCorr, *sqconv;
-  fftw_complex *C3, *PointVolume, *PointSq;
-  rfftwnd_plan p3, pi3, r3, ri3;
-  fftw_real scale;
-
-  struct tm *zeit __attribute__ ( ( unused ) );
   struct tm start;
-  char name[200];
-  int Rx_max, Ry_max, Rz_max;
-  int Rx_min, Ry_min, Rz_min;
-  int Vx_min, Vy_min, Vz_min;
-  int Vx_max, Vy_max, Vz_max;
   float Phi, Psi, Theta, winkel_lauf, nvox;
-  float *Rot_tmpl, *Vol_tmpl, *Rot_mask;
-  int i, j, k, tmpx __attribute__ ( ( unused ) ), tmpy __attribute__ ( ( unused ) ), tmpz __attribute__ ( ( unused ) ), lauf_pe, ksub __attribute__ ( ( unused ) );
-  int ijk __attribute__ ( ( unused ) );
+  int i, j, k, lauf_pe;
   int lauf;
-  float max __attribute__ ( ( unused ) ), eps;
-  time_t lt __attribute__ ( ( unused ) );
-  float Ctmp __attribute__ ( ( unused ) ), Ctmpim __attribute__ ( ( unused ) ), Dtmp __attribute__ ( ( unused ) ), Dtmpim __attribute__ ( ( unused ) );
+  float eps;
   int dim_fft;
   int sub[3], range[3], range_sub[3], subc[3], offset[3], dimarray[3];
-  int FullVolume_dims[3];
   int nr[3];
   int area[3];
+ 
 
-  /* MPI Variablen */
-  int winkel_max, winkel_min;
-  int winkel_max_pe, winkel_min_pe;
-  int winkel_step_pe;
+  /* MPI Variables */
   int Phi_max, Psi_max, Theta_max;
   int Phi_min, Psi_min, Theta_min;
   int Phi_step, Psi_step, Theta_step;
-  int Theta_winkel_start __attribute__ ( ( unused ) ), Psi_winkel_start __attribute__ ( ( unused ) ), Phi_winkel_start __attribute__ ( ( unused ) );
   int Theta_winkel_nr, Psi_winkel_nr, Phi_winkel_nr;
-  int Theta_winkel_end __attribute__ ( ( unused ) ), Psi_winkel_end __attribute__ ( ( unused ) ), Phi_winkel_end __attribute__ ( ( unused ) );
   int Theta_steps, Psi_steps, Phi_steps;
-  float Theta_winkel_rest_nr, Psi_winkel_rest_nr, Phi_winkel_rest_nr __attribute__ ( ( unused ) );
+  float Theta_winkel_rest_nr, Psi_winkel_rest_nr;
   float tempccf;
-  float *Ergebnis, *conv;
   float cycles;
   int cycle;
-
-  /* MPI Variablen Ende*/
+  int format = UNKNOWN_FORMAT; /* SM */
+  /* End MPI Variables*/
 
   MPI_Init ( &argc, &argv );
   MPI_Comm_size ( MPI_COMM_WORLD, &mysize );
   MPI_Comm_rank ( MPI_COMM_WORLD, &myrank );
 
   if ( argc < 15 ) {
-    printf ( "\n\n" );
-    printf ( " 'OMNIMATCH' computes a matched filter of tomograms \n" );
-    printf ( " and templates of arbitrary geometry.\n" );
-    printf ( " In detail, a locally normalized constrained cross-correlation\n" );
-    printf ( " is computed (further development of CCF defined in \n" );
-    printf ( "   Frangakis et al PNAS 2002. \n" );
-    printf ( " ######################################################\n" );
-    printf ( " All files in EM-V-int4 format !!!\n\n" );
-    printf ( "PARAMETERS\n" );
-    printf ( "Input: \n" );
-    printf ( " no_cpus      number of CPUs to be used for MPI processing \n" );
-    printf ( " Volume       Tomogram to be searched\n" );
-    printf ( " Template     template of object - smaller dimension...\n" );
-    printf ( " mask         (spherical) mask for local correlation - same dim as template\n" );
-    printf ( " psf          pointspread function - same dim as template\n" );
-    printf ( " angles       Euler angles that determine angular range:  \n" );
-    printf ( "              Phi_min Phi_max Phi_step Psi_min Psi_max Psi_step The_min The_max The_step\n" );
-    printf ( " dimfft       dimension of FFT - tomogram is divided into cubes of dimfft\n" );
-    printf ( "              dimfft must be <= (smaller or equal to) the smallest dimension! \n\n" );
-    printf ( "Output:\n" );
-    printf ( " Out.ccf      non-normalized X-Correlation Function\n" );
-    printf ( " Out.ccf.norm locally normalized X-Correlation Function\n" );
-    printf ( " Out.ang      File containing the corresponding angles. The index of the correlated angle\n" );
-    printf ( "              is stored -> keep your angular parameters to reconstruct the angles!\n" );
-    printf ( "              loop order: inner=phi, outer: theta\n\n" );
-    printf ( " ######################################################\n" );
-    printf ( " usage: omnimatch.exe Volume Template Out ...\n" );
-    printf ( "         ... Phi_min Phi_max Phi_step Psi_min Psi_max Psi_step The_min The_max The_step\n" );
-    printf ( "    ... psf mask-file dim_of_fft\n\n" );
-    printf ( " the total number of angles should be modulo\n" );
-    printf ( " of used processors for highest computational efficiency \n\n" );
-    printf ( " Linux:  1.'lamboot' to start MPI\n" );
-    printf ( "              2.'mpirun -np 2 omnimatch.exe Volume Templ Out 30 180 30 30 180 30 30 180 30 Poinspread-function mask-file 256'\n\n" );
-    printf ( " ######################################################\n" );
-    printf ( "   Attention: \n" );
-    printf ( "    Nomenclature of Euler angles is according to the EM program\n" );
-    printf ( "    In most other programs (SPIDER, EMAN) Phi and Psi are \n" );
-    printf ( "    exchanged compared to the EM convention. \n" );
-    printf ( " ######################################################\n" );
-    printf ( " In this version asymmetric masks can be used ! \n" );
-    printf ( " last revision  ,  04/01/05, Friedrich Foerster\n" );
-    printf ( "   - released modulu requirement " );
-    printf ( " \n\n" );
-    exit ( 1 );
+    show_usage();
   }
+  /* SM: support for MRC and EM file formats */
+  format = findFormat( argv[1]);
+  if (format == UNKNOWN_FORMAT) {
+    printf("Uknown file file format, exiting ...\n");
+    exit (1);
+  }
+  /* SM end */
 
-  /* Dimensionen auslesen */
+  /* Read dimensions */
   // Dimension of fft
   dim_fft = atoi ( argv[15] );
   nr[0] = 1;
@@ -144,13 +283,15 @@ int main ( int argc, char *argv[] ) {
   area[0] = dim_fft;
   area[1] = dim_fft;
   area[2] = dim_fft;
-  read_em_header ( argv[1], &inputdata1 ); /* Searchvolume */
-  read_em ( argv[2], &inputdata2 ); /* Template */
-  FullVolume_dims[0] = inputdata1.dims[0];
-  FullVolume_dims[1] = inputdata1.dims[1];
-  FullVolume_dims[2] = inputdata1.dims[2];
-  if ( myrank == 0 )
+  read_header ( argv[1], &inputdata1 ); /* Search volume */
+  read_data ( argv[2], &inputdata2 ); /* Template */
+  FullVolume_dims[0] = (format == MRC_FORMAT) ? inputdata1.header.mrcHeader.nx[0] : inputdata1.header.emHeader.dims[0];
+  FullVolume_dims[1] = (format == MRC_FORMAT) ? inputdata1.header.mrcHeader.ny[0] : inputdata1.header.emHeader.dims[1];
+  FullVolume_dims[2] = (format == MRC_FORMAT) ? inputdata1.header.mrcHeader.nz[0] : inputdata1.header.emHeader.dims[2];
+  if ( myrank == 0 ) {
     printf ( " Dims tomogram: %i , %i , %i  -  dim FFT %i \n", FullVolume_dims[0], FullVolume_dims[1], FullVolume_dims[2], dim_fft );
+    /* printf ( " Dims template: %i , %i , %i\n", inputdata2.dims[0], inputdata2.dims[1], inputdata2.dims[2] ); */
+  }
   if ( dim_fft > FullVolume_dims[2] || dim_fft > FullVolume_dims[1] || dim_fft > FullVolume_dims[0] ) {
     if ( myrank == 0 )
       printf ( "dimfft greater than one of the dimensions! Choose smaller and restart! \n" );
@@ -161,59 +302,25 @@ int main ( int argc, char *argv[] ) {
   Rx_min = 1;
   Ry_min = 1;
   Rz_min = 1;
-  Rx_max = ( inputdata2.dims[0] );
-  Ry_max = ( inputdata2.dims[1] );
-  Rz_max = ( inputdata2.dims[2] );
+  Rx_max = ( (format == MRC_FORMAT) ? inputdata2.header.mrcHeader.nx[0] : inputdata2.header.emHeader.dims[0] );
+  Ry_max = ( (format == MRC_FORMAT) ? inputdata2.header.mrcHeader.ny[0] : inputdata2.header.emHeader.dims[1] );
+  Rz_max = ( (format == MRC_FORMAT) ? inputdata2.header.mrcHeader.nz[0] : inputdata2.header.emHeader.dims[2] );
   Vx_min = 1;
   Vy_min = 1;
   Vz_min = 1;
   Vx_max = dim_fft;
   Vy_max = dim_fft;
   Vz_max = dim_fft;
-  p3 = rfftw3d_create_plan ( Vx_max, Vy_max, Vz_max, FFTW_REAL_TO_COMPLEX,
-                             FFTW_MEASURE | FFTW_IN_PLACE );      /*FFTW_ESTIMATE FFTW_MEASURE */
-  pi3 = rfftw3d_create_plan ( Vx_max, Vy_max, Vz_max, FFTW_COMPLEX_TO_REAL,
-                              FFTW_MEASURE | FFTW_IN_PLACE );
-  r3 = rfftw3d_create_plan ( Rx_max, Rx_max, Rx_max, FFTW_REAL_TO_COMPLEX,
-                             FFTW_MEASURE | FFTW_IN_PLACE );      /*FFTW_ESTIMATE FFTW_MEASURE */
-  ri3 = rfftw3d_create_plan ( Rx_max, Rx_max, Rx_max, FFTW_COMPLEX_TO_REAL,
-                              FFTW_MEASURE | FFTW_IN_PLACE );
+
+  create_fft_plans();
+
   if ( myrank == 0 ) {
     printf ( "Plans for FFTW created \n" );fflush ( stdout );
   }
-  Volume = ( fftw_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( fftw_real ) );
-  Rot_tmpl = ( float * ) malloc ( sizeof ( float ) * Rx_max * Ry_max * Rz_max );
-  Rot_mask = ( float * ) malloc ( sizeof ( float ) * Rx_max * Ry_max * Rz_max );
-  Vol_tmpl = ( float * ) malloc ( sizeof ( float ) * Vx_max * Vy_max * Vz_max );
-  conv = ( float * ) malloc ( sizeof ( float ) * Vx_max * Vy_max * Vz_max );
-  sqconv = ( fftw_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( fftw_real ) );
-  if ( !
-       ( inputdata1.floatdata =
-           ( float * ) malloc ( sizeof ( float ) * Vx_max * Vy_max * Vz_max ) ) ) {
-    printf ( "Memory allocation  failure in inputdata1.floatdata!!!" );
-    fflush ( stdout );
-    MPI_Finalize();
-    exit ( 1 );
-  }
-  if ( !
-       ( outputdata.floatdata =
-           ( float * ) malloc ( sizeof ( float ) * Vx_max * Vy_max * Vz_max ) ) ) {
-    printf ( "Memory allocation  failure in outputdata.floatdata!!!" );
-    fflush ( stdout );
-    MPI_Finalize();
-    exit ( 1 );
-  }
 
-  if ( !
-       ( Vol_tmpl_sort = ( fftw_real * ) calloc ( Vz_max * Vy_max * 2 * ( Vx_max / 2 + 1 ), sizeof ( fftw_real ) ) ) ) {
-    printf ( "Memory allocation  failure in Volume_tmpl_sort!!!" );
-    printf ( "Nx = %i, Ny = %i, Nz = %i, bytes = %li \n", 2 * ( Vx_max / 2 + 1 ), Vy_max, Vz_max, sizeof ( fftw_real ) );
-    fflush ( stdout );
-    MPI_Finalize();
-    exit ( 1 );
-  }
-  Ergebnis = ( float * ) calloc ( Vz_max * Vy_max * Vx_max, sizeof ( float ) );
-  /* Winkelraum */
+  allocate_memory();
+
+  /* Angle space */
   Phi_min = atof ( argv[4] );
   Phi_max = atof ( argv[5] );
   Phi_step = atof ( argv[6] );
@@ -224,9 +331,15 @@ int main ( int argc, char *argv[] ) {
   Theta_max = atof ( argv[11] );
   Theta_step = atof ( argv[12] );
   /* Pointspread Function*/
-  read_em ( argv[13], &inputdata3 );
+  read_data ( argv[13], &inputdata3 );
   /* mask function */
-  read_em ( argv[14], &inputdata4 );
+  read_data ( argv[14], &inputdata4 );
+
+/*   if ( myrank == 0 ) { */
+/*     printf ( " Dims psf: %i , %i , %i\n", inputdata3.dims[0], inputdata3.dims[1], inputdata3.dims[2] ); */
+/*     printf ( " Dims mask: %i , %i , %i\n", inputdata4.dims[0], inputdata4.dims[1], inputdata4.dims[2] ); */
+/*   } */
+
   Phi_steps = ( Phi_max - Phi_min ) / Phi_step + 1;
   Psi_steps = ( Psi_max - Psi_min ) / Psi_step + 1;
   Theta_steps = ( Theta_max - Theta_min ) / Theta_step + 1;
@@ -245,68 +358,43 @@ int main ( int argc, char *argv[] ) {
   cycles = ( int ) ( FullVolume_dims[1] / ( dim_fft - Rx_max ) + 0.5 ) * cycles;
   cycles = ( int ) ( FullVolume_dims[0] / ( dim_fft - Rx_max ) + 0.5 ) * cycles;
   cycle = 0;
+
   if ( myrank == 0 ) {
     printf ( "\n OMNIMATCH knocks the stuffing out of you ... " );tack ( &start );fflush ( stdout );
     /* prepare Output */
-    strcpy ( name, argv[3] );
-    strcat ( name, ".ccf" );
-    printf ( "\nCreate outputfile: %s ... \n", name );fflush ( stdout );
-    create_em ( name, FullVolume_dims );
-    strcpy ( name, argv[3] );
-    strcat ( name, ".ang" );
-    printf ( "Create outputfile: %s ... \n", name );fflush ( stdout );
-    create_em ( name, FullVolume_dims );
+    create_output_files( argv[3] );
   }
+
   for ( sub[2] = 1; sub[2] < FullVolume_dims[2] - Rz_max;sub[2] = sub[2] + dim_fft - Rz_max ) {
     if ( myrank == 0 ) {
       tack ( &start );
-      printf ( "%f%%..", ( float ) ( cycle / cycles * 100 ) );
+      printf ( "%f%%..\n", ( float ) ( cycle / cycles * 100 ) );
       fflush ( stdout );
     }
 
     for ( sub[1] = 1; sub[1] < FullVolume_dims[1] - Ry_max;sub[1] = sub[1] + dim_fft - Ry_max ) {
       for ( sub[0] = 1; sub[0] < FullVolume_dims[0] - Rx_max;sub[0] = sub[0] + dim_fft - Rx_max ) {
-        cycle = cycle + 1;
+	cycle = cycle + 1;
         subc[0] = sub[0];
         subc[1] = sub[1];
         subc[2] = sub[2];
         if ( sub[2] + range[2] > FullVolume_dims[2] ) subc[2] = FullVolume_dims[2] - range[2];  /* we are at the corner ?!*/
         if ( sub[1] + range[1] > FullVolume_dims[1] ) subc[1] = FullVolume_dims[1] - range[1];  /* we are at the corner ?!*/
         if ( sub[0] + range[0] > FullVolume_dims[0] ) subc[0] = FullVolume_dims[0] - range[0];  /* we are at the corner ?!*/
-        read_em_subregion ( argv[1], &inputdata1, subc, range );
-        read_em_subregion ( argv[1], &outputdata, subc, range );
-        /* Umsortieren der Daten */
-        lauf = 0;
-        for ( k = 0; k < Vz_max; k++ ) {
-          for ( j = 0; j < Vy_max; j++ ) {
-            for ( i = 0; i < Vx_max; i++ ) {
-              /* square - needed for normalization */
-              sqconv[i + 2 * ( Vx_max / 2 + 1 ) * ( j + Vy_max * k ) ] = inputdata1.floatdata[lauf] * inputdata1.floatdata[lauf];
-              Volume[i + 2 * ( Vx_max / 2 + 1 ) * ( j + Vy_max * k ) ] = inputdata1.floatdata[lauf];
-              inputdata1.floatdata[lauf] = -1.0; /* kleine Zahl wg Max-Op , hier kommen die CCFs rein*/
-              outputdata.floatdata[lauf] = -1.0; /* hier kommen die Winkel rein*/
-              lauf++;
-            }
-          }
-        }
-        rfftwnd_one_real_to_complex ( p3, &Volume[0], NULL ); /* einmalige fft von Suchvolumen */
-        rfftwnd_one_real_to_complex ( p3, &sqconv[0], NULL ); /* FFT of square*/
-        if ( myrank < mysize - 1 ) {
-          winkel_step_pe = ( int ) winkel_max / mysize;
-          winkel_min_pe = myrank * winkel_step_pe;
-        } else {
-          winkel_step_pe = ( int ) winkel_max / mysize +
-                           winkel_max - ( ( int ) winkel_max / mysize ) * mysize; /* last processor needs to do more */
-          winkel_min_pe = myrank * ( ( int ) winkel_max / mysize );
-        }
 
-        if ( myrank < mysize )
-          winkel_max_pe = winkel_min_pe + winkel_step_pe;
-        else
-          winkel_max_pe = winkel_max;/* last processor */
+        read_subregion ( argv[1], &inputdata1, subc, range );
+        read_subregion ( argv[1], &outputdata, subc, range );
+        
+	/* Re-sorting the data */
+	sort_data();
+
+        rfftwnd_one_real_to_complex ( p3, &Volume[0], NULL ); /* FFT of search volume */
+        rfftwnd_one_real_to_complex ( p3, &sqconv[0], NULL ); /* FFT of square*/
+
+	distribute_workload();
+
         Theta_winkel_nr = ( int ) winkel_min_pe / ( Psi_steps * Phi_steps );
-        Theta_winkel_rest_nr =
-          winkel_min_pe - Theta_winkel_nr * ( Psi_steps * Phi_steps );
+        Theta_winkel_rest_nr = winkel_min_pe - Theta_winkel_nr * ( Psi_steps * Phi_steps );
         Psi_winkel_nr = ( int ) Theta_winkel_rest_nr / ( Phi_steps );
         Psi_winkel_rest_nr = Theta_winkel_rest_nr - Psi_winkel_nr * ( Phi_steps );
         Phi_winkel_nr = ( int ) Psi_winkel_rest_nr;
@@ -315,10 +403,10 @@ int main ( int argc, char *argv[] ) {
         Psi = Psi_winkel_nr * Psi_step + Psi_min;
         eps = 0.001;
         nvox = ( float ) 0.0;
-        //Friedrich -> Zaehlung der voxels
-        /*nvox = sumvoxel(Rx_max, Ry_max, Rz_max, &inputdata4.floatdata[0]);
-        printf("main2: n = %f \n",nvox);fflush(stdout);*/
-        eps = 0.001;
+        //Friedrich -> Counting of voxels
+/* 	printf("\n Rank=%d, Rx_max=%d, Ry_max=%d, Rz_max=%d\n", myrank, Rx_max, Ry_max, Rz_max); */
+        /* printf("Rank=%d, wlmin=%d, wlmax=%d\n", myrank, winkel_min_pe, winkel_max_pe); */
+	eps = 0.001;
         for ( winkel_lauf = winkel_min_pe; winkel_lauf < winkel_max_pe;winkel_lauf++ ) {
           if ( Phi < Phi_max )
             Phi = Phi + Phi_step;
@@ -330,51 +418,22 @@ int main ( int argc, char *argv[] ) {
             Psi = Psi_min;
             Theta = Theta + Theta_step;
           }
-          tom_rotate3d ( &Rot_tmpl[0], &inputdata2.floatdata[0], Phi, Psi, Theta, Rx_max, Ry_max, Rz_max );
-          tom_rotate3d ( &Rot_mask[0], &inputdata4.floatdata[0], Phi, Psi, Theta, Rx_max, Ry_max, Rz_max );
+	  /* printf("Rank=%d, winkel_lauf=%f, phi=%f, psi=%f, theta=%f \n", myrank, winkel_lauf, Phi, Psi, Theta); */
+          tom_rotate3d ( &Rot_tmpl[0], &inputdata2.fdata[0], Phi, Psi, Theta, Rx_max, Ry_max, Rz_max );
+          tom_rotate3d ( &Rot_mask[0], &inputdata4.fdata[0], Phi, Psi, Theta, Rx_max, Ry_max, Rz_max );
           /*calculate Ref variance - ref is normalized in subroutine */
-          nvox = prepref ( Rx_min, Rx_max, eps, &Rot_tmpl[0], &inputdata3.floatdata[0], &Rot_mask[0], r3, ri3 );
-          pastes ( &Rot_tmpl[0], &Vol_tmpl[0], 1, 1, 1, Rx_max, Ry_max, Rz_max, Vx_max );
-          scale = 1.0 / ( ( double ) Vx_max * ( double ) Vy_max * ( double ) Vz_max );
-          sort4fftw ( &Vol_tmpl_sort[0], &Vol_tmpl[0], Vx_max, Vy_max, Vz_max );
-          rfftwnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
-          PointVolume = ( fftw_complex * ) & Volume[0];
-          C3 = ( fftw_complex * ) & Vol_tmpl_sort[0];
-          /* Correlation */
-          correl ( &PointVolume[0], &C3[0], Vx_max, Vy_max, Vz_max, scale );
-          /* back to real space */
-          rfftwnd_one_complex_to_real ( pi3, &C3[0], NULL );
-          PointCorr = ( fftw_real * ) & C3[0];
-          /* reorder data */
-          sortback4fftw ( &PointCorr[0], &Ergebnis[0], Vx_max, Vy_max, Vz_max );
+          nvox = prepref ( Rx_min, Rx_max, eps, &Rot_tmpl[0], &inputdata3.fdata[0], &Rot_mask[0], r3, ri3 );
+
+	  do_correlation( Rot_tmpl, ( fftw_complex * ) Volume, Ergebnis);
           // cross
           cross ( &Ergebnis[0], Vx_max );
           /* ------------------- normalization ----------------------------------------- */
-          /* paste mask into zero volume*/
-          pastes ( &Rot_mask[0], &Vol_tmpl[0], 1, 1, 1, Rx_max, Ry_max, Rz_max, Vx_max );
-          /* 1st local mean */
-          sort4fftw ( &Vol_tmpl_sort[0], &Vol_tmpl[0], Vx_max, Vy_max, Vz_max );
-          rfftwnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
-          C3 = ( fftw_complex * ) & Vol_tmpl_sort[0];
-          /* Convolution of volume and mask */
-          scale = 1.0 / ( ( double ) Vx_max * ( double ) Vy_max * ( double ) Vz_max );
-          /*convolve( &PointVolume[0], &C3[0], Vx_max, Vy_max, Vz_max, scale);*/
-          correl ( &PointVolume[0], &C3[0], Vx_max, Vy_max, Vz_max, scale );
-          rfftwnd_one_complex_to_real ( pi3, &C3[0], NULL );
-          PointCorr = ( fftw_real * ) & C3[0];
-          /* reorder data (FFTW) */
-          sortback4fftw ( &PointCorr[0], &conv[0], Vx_max, Vy_max, Vz_max );
+          
+	  do_correlation( Rot_mask, ( fftw_complex * ) Volume, conv);
+
           /* 2nd : convolution of square and resorting*/
-          /* paste mask into zero volume*/
-          pastes ( &Rot_mask[0], &Vol_tmpl[0], 1, 1, 1, Rx_max, Ry_max, Rz_max, Vx_max );
-          sort4fftw ( &Vol_tmpl_sort[0], &Vol_tmpl[0], Vx_max, Vy_max, Vz_max );
-          rfftwnd_one_real_to_complex ( p3, &Vol_tmpl_sort[0], NULL );
-          C3 = ( fftw_complex * ) & Vol_tmpl_sort[0];
-          PointSq = ( fftw_complex * ) & sqconv[0];// set pointer to FFT of square
-          /*convolve( &PointSq[0], &C3[0], Vx_max, Vy_max, Vz_max, scale);*/
-          correl ( &PointSq[0], &C3[0], Vx_max, Vy_max, Vz_max, scale );
-          rfftwnd_one_complex_to_real ( pi3, &C3[0], NULL );
-          PointCorr = ( fftw_real * ) & C3[0];
+	  do_correlation( Rot_mask, ( fftw_complex * ) sqconv, NULL);
+
           lauf = 0;
           for ( k = 0; k < Vz_max; k++ ) {
             for ( j = 0; j < Vy_max; j++ ) {
@@ -396,18 +455,18 @@ int main ( int argc, char *argv[] ) {
                 } else {
                   tempccf = Ergebnis[lauf] / conv[lauf];/*divide CCF by variance*/
                 }
-                if ( inputdata1.floatdata[lauf] < tempccf ) {
-                  inputdata1.floatdata[lauf] = tempccf;
-                  outputdata.floatdata[lauf] = ( int ) winkel_lauf;
+                if ( inputdata1.fdata[lauf] < tempccf ) {
+                  inputdata1.fdata[lauf] = tempccf;
+                  outputdata.fdata[lauf] = ( int ) winkel_lauf;
                 }
                 lauf++;
               }
             }
           }
-        }                               /* Ende winkel_lauf */
+        }                               /* End winkel_lauf */
         //FF
         MPI_Barrier ( MPI_COMM_WORLD );
-        /* Ergebnisse einsammeln (myrank 0)*/
+        /* Collect results (myrank 0)*/
         if ( myrank == 0 ) {
           for ( lauf_pe = 1; lauf_pe < mysize; lauf_pe++ ) {
             MPI_Recv ( &Ergebnis[0], Vx_max * Vy_max * Vz_max, MPI_FLOAT, lauf_pe,
@@ -416,28 +475,28 @@ int main ( int argc, char *argv[] ) {
                        lauf_pe, 98, MPI_COMM_WORLD, &status );
             /* use conv as temporary memory for angles  */
             for ( lauf = 0; lauf < Vx_max * Vy_max * Vz_max; lauf++ ) {
-              if ( inputdata1.floatdata[lauf] < Ergebnis[lauf] ) {
-                inputdata1.floatdata[lauf] = Ergebnis[lauf];
-                outputdata.floatdata[lauf] = conv[lauf];
-              }
+              if ( inputdata1.fdata[lauf] < Ergebnis[lauf] ) {
+                inputdata1.fdata[lauf] = Ergebnis[lauf];
+                outputdata.fdata[lauf] = conv[lauf];
+	      }
             }
           }
-          /*Ergebnisse eingesammelt */
+          /* Results collected */
         }
-        /* myrank > 0: Ergebnisse senden */
+        /* myrank > 0: Send results */
         else {
-          MPI_Send ( inputdata1.floatdata, Vx_max * Vy_max * Vz_max, MPI_FLOAT, 0,
+          MPI_Send ( inputdata1.fdata, Vx_max * Vy_max * Vz_max, MPI_FLOAT, 0,
                      99, MPI_COMM_WORLD );
-          MPI_Send ( outputdata.floatdata, Vx_max * Vy_max * Vz_max, MPI_FLOAT, 0,
+          MPI_Send ( outputdata.fdata, Vx_max * Vy_max * Vz_max, MPI_FLOAT, 0,
                      98, MPI_COMM_WORLD );
         }
         MPI_Barrier ( MPI_COMM_WORLD );
-        /* write non-normalized volume and angle idices */
-        subc[0] = subc[0] + Rx_max / 2;
-        subc[1] = subc[1] + Rx_max / 2;
-        subc[2] = subc[2] + Rx_max / 2;
+        /* write non-normalized volume and angle indices */
         if ( myrank == 0 ) {
-          offset[0] = Rx_max / 2;
+	  subc[0] = subc[0] + Rx_max / 2;
+	  subc[1] = subc[1] + Rx_max / 2;
+	  subc[2] = subc[2] + Rx_max / 2;
+	  offset[0] = Rx_max / 2;
           offset[1] = Rx_max / 2;
           offset[2] = Rx_max / 2;
           dimarray[0] = dim_fft;
@@ -445,31 +504,20 @@ int main ( int argc, char *argv[] ) {
           dimarray[2] = dim_fft;
           strcpy ( name, argv[3] );
           strcat ( name, ".ccf" );
-          write_em_subsubregion ( name, &inputdata1, subc, range_sub, offset, dimarray );
+          write_subsubregion ( name, &inputdata1, subc, range_sub, offset, dimarray );
           strcpy ( name, argv[3] );
           strcat ( name, ".ang" );
-          write_em_subsubregion ( name, &outputdata, subc, range_sub, offset, dimarray );
+          write_subsubregion ( name, &outputdata, subc, range_sub, offset, dimarray );
         }
-        MPI_Barrier ( MPI_COMM_WORLD );
+        /* MPI_Barrier ( MPI_COMM_WORLD ); */
       }
     } /* these are the new brackets from the subregion_read , SN */
   }
-  free ( Ergebnis );
-  free ( inputdata1.floatdata );
-  free ( inputdata2.floatdata );
-  free ( inputdata3.floatdata );
-  free ( inputdata4.floatdata );
-  rfftwnd_destroy_plan ( p3 );
-  rfftwnd_destroy_plan ( pi3 );
-  rfftwnd_destroy_plan ( r3 );
-  rfftwnd_destroy_plan ( ri3 );
-  free ( Volume );
-  free ( sqconv );
-  free ( conv );
-  free ( Rot_tmpl );
-  free ( Rot_mask );
-  free ( Vol_tmpl_sort );
-  free ( outputdata.floatdata );
+
+  destroy_fft_plans();
+
+  free_memory();
+
   if ( myrank == 0 ) {
     printf ( "OMNIMATCH finished succesfully. Good luck." );
     tack ( &start ); fflush ( stdout );
@@ -479,25 +527,25 @@ int main ( int argc, char *argv[] ) {
   /* end main */
 }
 
-/* Variablen:
+/* Variables:
 
-p3 und pi3:      Plan fuer die FFT bzw. IFFT (Volume)
-r3 und ri3:      Plan fuer die FFT bzw. IFFT (Template Vol)
-Volume:          Suchvolumen (sortiert fuer FFT)
-PointVolume:     komplexer Pointer auf Suchvolumen fft(Volume)
-sqconv:          Quadrat des Volumens (sortiert fuer FFT)
-PointSq:         komplexer Pointer auf fft(sqconv)
-conv:            Volumen fuer convolution Vol - mask / Temp fuer Winkel
-Rot_tmpl:        Rotiertes Tmpl fuer Suche
-Vol_tmpl:        Volumen mit rot. Template
-Vol_tmpl_sort:   Volumen mit rot. Template sortiert fuer FFT
-Vx_max...:       Dimensionen des Suchvolumens
-Rx_max...:       Dimensionen des Templatevolumens
-PointCorr:       realer Pointer auf Correlationsergebnis
-C3:              komplexer Pointer auf fft(Vol_tmpl_sort)
-Ergebnis:        max CCF, spaeter local mean
-Ergebnis_winkel: Winkel Index
-i,j,k,lauf:      Laufvariablen
+p3 and pi3:      Plan for the FFT and IFFT (Volume)
+r3 and ri3:      Plan for the FFT and IFFT (Template Vol)
+Volume:          Search volume (Sorted for FFT)
+PointVolume:     Pointer to complex FFT search volume (Volume)
+sqconv:          Square of the volume (Sorted for FFT)
+PointSq:         Pointer to complex FFT (sqconv)
+conv:            Volume for convolution Vol - mask / Temp for angle
+Rot_tmpl:        Rotated TMPL for search
+Vol_tmpl:        Volume with rot. Template
+Vol_tmpl_sort:   Volume with rot. Template sorted for FFT
+Vx_max...:       Dimensions of the search volume
+Rx_max...:       Dimensions of the template volume
+PointCorr:       Pointer to real Correlations results
+C3:              Pointer to complex FFT (Vol_tmpl_sort)
+Ergebnis:        Max CCF, later mean local
+Ergebnis_winkel: Angle Index
+i,j,k,lauf:      Control variables
 */
 
 

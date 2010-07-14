@@ -4,11 +4,11 @@ TEMPLATE = lib
 TARGET = tom
 CONFIG -= qt
 CONFIG += static
-HEADERS += nrutil.h \
-	tom.h \
-	zeit.h
+#HEADERS += nrutil.h \
+#	tom.h \
+#	zeit.h
+INCLUDEPATH += ../include
 SOURCES += cross.c \
-	emfile.c \
 	energizer.c \
 	fourfilter.c \
 	pastes.c \

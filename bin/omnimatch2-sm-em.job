@@ -1,0 +1,18 @@
+# This is a job requesting 2 processors
+#
+# request 1 nodes, 2 processors per node:
+#PBS -lnodes=1:ppn=2
+# job requires at most 1 hour wallclock time
+#PBS -lwalltime=0:10:00
+# cd to the work directory
+cd ~/omnimatch-sm-sp
+# add the Intel environment for MPICH, using Infiniband:
+module load openmpi/gnu/64/1.4.2 
+n=`wc -l < $PBS_NODEFILE`
+echo start of job in directory $PBS_O_WORKDIR
+echo number of nodes is $n
+echo the allocated nodes are:
+cat $PBS_NODEFILE
+# run the program
+echo Start now...
+time mpirun -np 2 bin/omnimatch.bin data/testvol.em data/templ.em Out 30 180 30 30 180 30 30 180 30 data/psf.em data/mask_15.em 64 > logfile2 2>&1

@@ -6,7 +6,7 @@
 # job requires at most 1 hour wallclock time
 #PBS -lwalltime=1:00:00
 
-cd $HOME/omnimatch-fftw/bin
+cd $HOME/omnimatch-sp/bin
 
 . ../setenv.sh
 
@@ -16,9 +16,9 @@ time mpiexec \
 	./omnimatch \
 	../data/testvol.em \
 	../data/templ.em \
-	testvol24-dp \
+	testvol24 \
 	0 180 20 0 180 20 0 180 20 \
 	../data/psf.em \
 	../data/mask_15.em \
 	128 \
-	>testvol24-dp.out 2>testvol24-dp.err
+	>testvol24.out 2>testvol24.err
